@@ -1,0 +1,350 @@
+:root {
+    --primary-bg: #1a1a1a;
+    --secondary-bg: #2a2a2a;
+    --tertiary-bg: #3a3a3a;
+    --accent-color: #00aaff;
+    --text-color: #f0f0f0;
+    --border-color: #4a4a4a;
+    --highlight-color: #77dd77; /* Changed to a softer green */
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    margin: 0;
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Align to top */
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent; /* Disable tap highlight on iOS */
+}
+
+.container {
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+}
+
+h1 {
+    color: var(--accent-color);
+    margin-bottom: 25px;
+}
+
+.global-controls {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: var(--secondary-bg);
+    padding: 20px 15px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+
+.playback-controls {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: var(--secondary-bg);
+    padding: 20px 15px;
+    border-radius: 12px;
+    margin-top: 25px; /* Added margin-top */
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.base-note-selectors, .rate-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.seq-max-controls {
+    background-color: var(--secondary-bg);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.seq-max-controls label {
+    display: block;
+    margin-bottom: 15px;
+    font-size: 1em;
+    font-weight: bold;
+}
+
+.seq-max-buttons {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+}
+
+.seq-max-button {
+    background-color: var(--tertiary-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 0;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.seq-max-button.active {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+    font-weight: bold;
+}
+
+.control-group label {
+    font-size: 1em;
+}
+
+input[type="number"], select {
+    background-color: var(--tertiary-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 1.1em;
+    width: 85px;
+    text-align: center;
+}
+
+button {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 15px 20px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+button:active {
+    transform: scale(0.96);
+}
+
+#stop {
+    background-color: #ff4d4d;
+}
+
+.sequencer-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    background-color: var(--secondary-bg);
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.step {
+    background-color: var(--tertiary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    position: relative;
+    padding: 5px;
+}
+
+.step.active {
+    background-color: rgba(119, 221, 119, 0.7); /* Use rgba for transparency */
+    color: var(--text-color); /* Change text color for better contrast */
+    transform: scale(1.05);
+    border-color: rgba(119, 221, 119, 0.9);
+    box-shadow: 0 0 12px rgba(119, 221, 119, 0.5); /* Add a glow effect */
+}
+
+.step-number {
+    position: absolute;
+    top: 5px;
+    left: 8px;
+    font-size: 0.8em;
+    opacity: 0.5;
+}
+
+.step-transpose {
+    font-size: 1.8em;
+    font-weight: bold;
+}
+
+.step-note {
+    font-size: 1em;
+    opacity: 0.8;
+}
+
+/* Modal Styles */
+.modal {
+    display: none; 
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.75);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: var(--secondary-bg);
+    padding: 25px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.modal-header h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    color: var(--accent-color);
+}
+
+.transpose-info {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 35px;
+    gap: 10px;
+}
+
+.info-box {
+    background-color: var(--tertiary-bg);
+    padding: 12px;
+    border-radius: 8px;
+    width: 32%;
+    font-size: 1em;
+    font-weight: bold;
+    min-height: 45px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.transpose-selector {
+    position: relative;
+    height: 60px;
+    background-color: var(--tertiary-bg);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    margin: 40px 20px 0;
+    touch-action: none; 
+}
+
+.transpose-labels {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 25px 0;
+    font-size: 0.9em;
+    color: var(--text-color);
+    opacity: 0.7;
+}
+
+.selector-track {
+    width: 100%;
+    height: 6px;
+    background-color: var(--border-color);
+    border-radius: 3px;
+    position: relative;
+}
+
+.selector-ticks {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.tick {
+    position: absolute;
+    width: 2px;
+    height: 10px;
+    background-color: var(--border-color);
+    transform: translateX(-50%);
+}
+
+.tick.tick-major {
+    height: 20px;
+    background-color: var(--accent-color);
+}
+
+.selector-handle {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: var(--accent-color);
+    border-radius: 50%;
+    border: 3px solid var(--secondary-bg);
+    top: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+}
+
+.seq-max-controls {
+    background-color: var(--secondary-bg);
+    padding: 15px;
+    border-radius: 12px;
+    margin: 25px 0;
+    text-align: center;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: var(--accent-color);
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 2.5em;
+    font-weight: bold;
+    line-height: 1;
+    padding: 0 10px;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.close-button:hover {
+    opacity: 1;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: center; /* Center the buttons */
+    margin-top: 30px;
+    gap: 20px; /* Increased gap */
+}
+
+.modal-footer button {
+    width: 45%; /* Adjust width */
+}
+
+#reset-button {
+    background-color: #888;
+}

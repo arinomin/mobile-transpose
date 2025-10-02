@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mobile-transpose</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>mobile-transpose</h1>
+
+        <div class="global-controls">
+            <div class="control-group">
+                <label for="base-note">Base Note</label>
+                <div class="base-note-selectors">
+                    <select id="base-note">
+                        <option value="C">C</option>
+                        <option value="C#">C#</option>
+                        <option value="D">D</option>
+                        <option value="D#">D#</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                        <option value="F#">F#</option>
+                        <option value="G">G</option>
+                        <option value="G#">G#</option>
+                        <option value="A">A</option>
+                        <option value="A#">A#</option>
+                        <option value="B">B</option>
+                    </select>
+                    <select id="base-octave">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4" selected>4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <label for="bpm">BPM / Rate</label>
+                <div class="rate-controls">
+                    <input type="number" id="bpm" value="120" min="40" max="280">
+                    <select id="rate">
+                        <option value="4">16分</option>
+                        <option value="3">1拍3連</option>
+                        <option value="2">8分</option>
+                        <option value="1.5">2拍3連</option>
+                        <option value="1">4分</option>
+                        <option value="0.5">2分</option>
+                        <option value="0.25">全音符</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="sequencer-grid" class="sequencer-grid"></div>
+
+        <div class="seq-max-controls">
+            <label>SEQ MAX</label>
+            <div id="seq-max-buttons" class="seq-max-buttons"></div>
+        </div>
+
+        <div class="playback-controls">
+            <button id="play-once">Play Once</button>
+            <button id="play-loop">Play Loop</button>
+            <button id="stop">Stop</button>
+        </div>
+    </div>
+
+    <div id="step-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Step</h2>
+                <button id="close-modal-button" class="close-button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="transpose-info">
+                    <div id="transpose-value-display" class="info-box"></div>
+                    <div id="interval-name-display" class="info-box"></div>
+                    <div id="final-note-display" class="info-box"></div>
+                </div>
+                <div id="transpose-selector" class="transpose-selector">
+                    <div class="selector-track"></div>
+                    <div class="selector-ticks"></div>
+                    <div class="selector-handle"></div>
+                </div>
+                <div class="transpose-labels">
+                    <span>-12</span>
+                    <span>0</span>
+                    <span>+12</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="audition-button">Audition</button>
+                <button id="reset-button">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
