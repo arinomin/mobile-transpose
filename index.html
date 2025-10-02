@@ -12,46 +12,14 @@
 
         <div class="global-controls">
             <div class="control-group">
-                <label for="base-note">Base Note</label>
-                <div class="base-note-selectors">
-                    <select id="base-note">
-                        <option value="C">C</option>
-                        <option value="C#">C#</option>
-                        <option value="D">D</option>
-                        <option value="D#">D#</option>
-                        <option value="E">E</option>
-                        <option value="F">F</option>
-                        <option value="F#">F#</option>
-                        <option value="G">G</option>
-                        <option value="G#">G#</option>
-                        <option value="A">A</option>
-                        <option value="A#">A#</option>
-                        <option value="B">B</option>
-                    </select>
-                    <select id="base-octave">
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4" selected>4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                    </select>
-                </div>
+                <label>Base Note</label>
+                <button id="base-note-display-button" class="display-button">C4</button>
             </div>
             <div class="control-group">
-                <label for="bpm">BPM / Rate</label>
-                <div class="rate-controls">
-                    <input type="number" id="bpm" value="120" min="40" max="280">
-                    <select id="rate">
-                        <option value="4">16分</option>
-                        <option value="3">1拍3連</option>
-                        <option value="2">8分</option>
-                        <option value="1.5">2拍3連</option>
-                        <option value="1">4分</option>
-                        <option value="0.5">2分</option>
-                        <option value="0.25">全音符</option>
-                    </select>
+                <label>BPM / Rate</label>
+                <div id="bpm-rate-controls" class="bpm-rate-controls">
+                    <button id="bpm-display-button" class="display-button">120</button>
+                    <button id="rate-display-button" class="display-button">16分</button>
                 </div>
             </div>
         </div>
@@ -73,7 +41,7 @@
     <div id="step-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Edit Step</h2>
+                <h2>Edit Step <span id="modal-step-number"></span></h2>
                 <button id="close-modal-button" class="close-button">&times;</button>
             </div>
             <div class="modal-body">
@@ -96,6 +64,68 @@
             <div class="modal-footer">
                 <button id="audition-button">Audition</button>
                 <button id="reset-button">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bpm-rate-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit BPM & Rate</h2>
+                <button id="close-bpm-rate-modal-button" class="close-button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="bpm-editor">
+                    <h3>BPM</h3>
+                    <div class="bpm-adjust-controls">
+                        <button id="bpm-down-10">-10</button>
+                        <button id="bpm-down-1">-1</button>
+                        <span id="modal-bpm-value">120</span>
+                        <button id="bpm-up-1">+1</button>
+                        <button id="bpm-up-10">+10</button>
+                    </div>
+                </div>
+                <div class="rate-editor">
+                    <h3>Rate</h3>
+                    <div id="modal-rate-buttons" class="rate-buttons">
+                        <button data-rate="4">16分</button>
+                        <button data-rate="3">1拍3連</button>
+                        <button data-rate="2">8分</button>
+                        <button data-rate="1.5">2拍3連</option>
+                        <button data-rate="1">4分</button>
+                        <button data-rate="0.5">2分</button>
+                        <button data-rate="0.25">全音符</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="done-bpm-rate-button">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="base-note-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Base Note</h2>
+                <button id="close-base-note-modal-button" class="close-button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="note-name-editor">
+                    <h3>Note</h3>
+                    <div id="modal-note-name-buttons" class="note-name-buttons">
+                        <!-- Note name buttons will be generated by JS -->
+                    </div>
+                </div>
+                <div class="octave-editor">
+                    <h3>Octave</h3>
+                    <div id="modal-octave-buttons" class="octave-buttons">
+                        <!-- Octave buttons will be generated by JS -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="done-base-note-button">Done</button>
             </div>
         </div>
     </div>

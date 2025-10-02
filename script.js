@@ -1,9 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
-    const bpmInput = document.getElementById('bpm');
-    const rateSelect = document.getElementById('rate');
-    const baseNoteSelect = document.getElementById('base-note');
-    const baseOctaveSelect = document.getElementById('base-octave');
     const seqMaxButtonsContainer = document.getElementById('seq-max-buttons');
     const playOnceBtn = document.getElementById('play-once');
     const playLoopBtn = document.getElementById('play-loop');
@@ -11,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sequencerGrid = document.getElementById('sequencer-grid');
     const stepModal = document.getElementById('step-modal');
     const closeModalBtn = document.getElementById('close-modal-button');
+    const modalStepNumber = document.getElementById('modal-step-number');
     const transposeValueDisplay = document.getElementById('transpose-value-display');
     const intervalNameDisplay = document.getElementById('interval-name-display');
     const finalNoteDisplay = document.getElementById('final-note-display');
@@ -19,21 +16,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetBtn = document.getElementById('reset-button');
     const selectorTicks = document.querySelector('.selector-ticks');
 
+    // BPM/Rate Modal Elements
+    const bpmRateModal = document.getElementById('bpm-rate-modal');
+    const bpmDisplayButton = document.getElementById('bpm-display-button');
+    const rateDisplayButton = document.getElementById('rate-display-button');
+    const closeBpmRateModalButton = document.getElementById('close-bpm-rate-modal-button');
+    const doneBpmRateButton = document.getElementById('done-bpm-rate-button');
+    const modalBpmValue = document.getElementById('modal-bpm-value');
+    const bpmDown10 = document.getElementById('bpm-down-10');
+    const bpmDown1 = document.getElementById('bpm-down-1');
+    const bpmUp1 = document.getElementById('bpm-up-1');
+    const bpmUp10 = document.getElementById('bpm-up-10');
+    const modalRateButtons = document.getElementById('modal-rate-buttons');
+
+    // Base Note Modal Elements
+    const baseNoteModal = document.getElementById('base-note-modal');
+    const baseNoteDisplayButton = document.getElementById('base-note-display-button');
+    const closeBaseNoteModalButton = document.getElementById('close-base-note-modal-button');
+    const doneBaseNoteButton = document.getElementById('done-base-note-button');
+    const modalNoteNameButtons = document.getElementById('modal-note-name-buttons');
+    const modalOctaveButtons = document.getElementById('modal-octave-buttons');
+
     // --- Constants ---
     const STEPS_COUNT = 16;
     const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const OCTAVES = [1, 2, 3, 4, 5, 6, 7];
     const MAJOR_TICKS = [-12, -7, 0, 7, 12];
     const INTERVAL_NAMES = {
         '-12': 'Octave Down', '-7': 'Perfect 5th Down', '0': 'Unison', '7': 'Perfect 5th Up', '12': 'Octave Up',
-        /* ... other interval names ... */
     };
+    const BPM_MIN = 40;
+    const BPM_MAX = 280;
 
     // --- State ---
     let audioContext;
-    let bpm = parseInt(bpmInput.value, 10);
-    let rate = parseFloat(rateSelect.value);
-    let baseNote = baseNoteSelect.value;
-    let baseOctave = parseInt(baseOctaveSelect.value, 10);
+    let bpm = 120;
+    let rate = 4;
+    let baseNote = 'C';
+    let baseOctave = 4;
     let seqMax = STEPS_COUNT;
     let steps = Array(STEPS_COUNT).fill(0).map(() => ({ transpose: 0 }));
     let currentStep = 0;
@@ -42,6 +62,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerId = null;
     let activeStepElement = null;
     let editedStepIndex = null;
+
+    // Temporary modal states
+    let modalBpm = bpm;
+    let modalRate = rate;
+    let modalRateText = '16分';
+    let modalBaseNote = baseNote;
+    let modalBaseOctave = baseOctave;
 
     // --- Web Audio API Initialization ---
     function initAudio() {
@@ -161,19 +188,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Modal Logic ---
-    function openModal(stepIndex) {
+    // --- Step Modal Logic ---
+    function openStepModal(stepIndex) {
         editedStepIndex = stepIndex;
+        modalStepNumber.textContent = `#${stepIndex + 1}`;
         const transpose = steps[stepIndex].transpose;
-        updateModalInfo(transpose);
+        updateStepModalInfo(transpose);
         stepModal.style.display = 'flex';
     }
 
-    function closeModal() {
+    function closeStepModal() {
         stepModal.style.display = 'none';
     }
 
-    function updateModalInfo(transpose, save = false) {
+    function updateStepModalInfo(transpose, save = false) {
         transposeValueDisplay.textContent = formatTranspose(transpose);
         intervalNameDisplay.textContent = INTERVAL_NAMES[transpose] || '';
         const baseMidi = noteToMidi(baseNote, baseOctave);
@@ -195,24 +223,78 @@ document.addEventListener('DOMContentLoaded', () => {
         const offsetX = clientX - selectorRect.left;
         const percentage = Math.max(0, Math.min(1, offsetX / selectorRect.width));
         let transpose = Math.round(percentage * 24) - 12;
-        updateModalInfo(transpose, true); // Auto-save
+        updateStepModalInfo(transpose, true); // Auto-save
+    }
+
+    // --- BPM/Rate Modal Logic ---
+    function openBpmRateModal() {
+        modalBpm = bpm;
+        modalRate = rate;
+        modalBpmValue.textContent = modalBpm;
+        modalRateButtons.querySelectorAll('button').forEach(btn => {
+            if (parseFloat(btn.dataset.rate) === modalRate) {
+                btn.classList.add('selected');
+                modalRateText = btn.textContent;
+            } else {
+                btn.classList.remove('selected');
+            }
+        });
+        bpmRateModal.style.display = 'flex';
+    }
+
+    function closeBpmRateModal() {
+        bpmRateModal.style.display = 'none';
+    }
+
+    function applyBpmRateChanges() {
+        bpm = modalBpm;
+        rate = modalRate;
+        bpmDisplayButton.textContent = bpm;
+        rateDisplayButton.textContent = modalRateText;
+        closeBpmRateModal();
+    }
+
+    function adjustBpm(amount) {
+        modalBpm = Math.max(BPM_MIN, Math.min(BPM_MAX, modalBpm + amount));
+        modalBpmValue.textContent = modalBpm;
+    }
+
+    // --- Base Note Modal Logic ---
+    function openBaseNoteModal() {
+        modalBaseNote = baseNote;
+        modalBaseOctave = baseOctave;
+        
+        modalNoteNameButtons.querySelectorAll('button').forEach(btn => {
+            btn.classList.toggle('selected', btn.dataset.note === modalBaseNote);
+        });
+        modalOctaveButtons.querySelectorAll('button').forEach(btn => {
+            btn.classList.toggle('selected', parseInt(btn.dataset.octave) === modalBaseOctave);
+        });
+
+        baseNoteModal.style.display = 'flex';
+    }
+
+    function closeBaseNoteModal() {
+        baseNoteModal.style.display = 'none';
+    }
+
+    function applyBaseNoteChanges() {
+        baseNote = modalBaseNote;
+        baseOctave = modalBaseOctave;
+        baseNoteDisplayButton.textContent = `${baseNote}${baseOctave}`;
+        updateAllStepsUI();
+        closeBaseNoteModal();
     }
 
     // --- Event Listeners ---
-    bpmInput.addEventListener('change', () => { bpm = parseInt(bpmInput.value, 10); });
-    rateSelect.addEventListener('change', () => { rate = parseFloat(rateSelect.value); });
-    baseNoteSelect.addEventListener('change', () => { baseNote = baseNoteSelect.value; updateAllStepsUI(); });
-    baseOctaveSelect.addEventListener('change', () => { baseOctave = parseInt(baseOctaveSelect.value, 10); updateAllStepsUI(); });
-
     playOnceBtn.addEventListener('click', () => startPlayback(false));
     playLoopBtn.addEventListener('click', () => startPlayback(true));
     stopBtn.addEventListener('click', stopPlayback);
 
-    stepModal.addEventListener('click', (e) => { if (e.target === stepModal) closeModal(); });
-    closeModalBtn.addEventListener('click', closeModal);
-
-    resetBtn.addEventListener('click', () => updateModalInfo(0, true)); // Auto-save on reset
-
+    // Step Modal
+    stepModal.addEventListener('click', (e) => { if (e.target === stepModal) closeStepModal(); });
+    closeModalBtn.addEventListener('click', closeStepModal);
+    resetBtn.addEventListener('click', () => updateStepModalInfo(0, true));
     auditionBtn.addEventListener('click', () => {
         initAudio();
         const percentage = parseFloat(transposeSelector.querySelector('.selector-handle').style.left) / 100;
@@ -222,6 +304,50 @@ document.addEventListener('DOMContentLoaded', () => {
         playSound(finalMidi);
     });
 
+    // BPM/Rate Modal
+    bpmDisplayButton.addEventListener('click', openBpmRateModal);
+    rateDisplayButton.addEventListener('click', openBpmRateModal);
+    closeBpmRateModalButton.addEventListener('click', closeBpmRateModal);
+    doneBpmRateButton.addEventListener('click', applyBpmRateChanges);
+    bpmRateModal.addEventListener('click', (e) => { if (e.target === bpmRateModal) closeBpmRateModal(); });
+
+    bpmDown10.addEventListener('click', () => adjustBpm(-10));
+    bpmDown1.addEventListener('click', () => adjustBpm(-1));
+    bpmUp1.addEventListener('click', () => adjustBpm(1));
+    bpmUp10.addEventListener('click', () => adjustBpm(10));
+
+    modalRateButtons.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            modalRate = parseFloat(e.target.dataset.rate);
+            modalRateText = e.target.textContent;
+            modalRateButtons.querySelector('.selected').classList.remove('selected');
+            e.target.classList.add('selected');
+        }
+    });
+
+    // Base Note Modal
+    baseNoteDisplayButton.addEventListener('click', openBaseNoteModal);
+    closeBaseNoteModalButton.addEventListener('click', closeBaseNoteModal);
+    doneBaseNoteButton.addEventListener('click', applyBaseNoteChanges);
+    baseNoteModal.addEventListener('click', (e) => { if (e.target === baseNoteModal) closeBaseNoteModal(); });
+
+    modalNoteNameButtons.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            modalBaseNote = e.target.dataset.note;
+            modalNoteNameButtons.querySelector('.selected').classList.remove('selected');
+            e.target.classList.add('selected');
+        }
+    });
+
+    modalOctaveButtons.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            modalBaseOctave = parseInt(e.target.dataset.octave, 10);
+            modalOctaveButtons.querySelector('.selected').classList.remove('selected');
+            e.target.classList.add('selected');
+        }
+    });
+
+    // Transpose Selector Drag Logic
     let isDragging = false;
     const startDrag = (e) => { isDragging = true; handleSelectorInteraction(e); };
     const onDrag = (e) => { if (isDragging) { e.preventDefault(); handleSelectorInteraction(e); } };
@@ -250,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stepElement.appendChild(stepNumberEl);
             stepElement.appendChild(transposeEl);
             stepElement.appendChild(noteEl);
-            stepElement.addEventListener('click', () => openModal(i));
+            stepElement.addEventListener('click', () => openStepModal(i));
             sequencerGrid.appendChild(stepElement);
         }
     }
@@ -284,8 +410,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function createModalNoteButtons() {
+        modalNoteNameButtons.innerHTML = '';
+        NOTE_NAMES.forEach(note => {
+            const button = document.createElement('button');
+            button.textContent = note;
+            button.dataset.note = note;
+            modalNoteNameButtons.appendChild(button);
+        });
+    }
+
+    function createModalOctaveButtons() {
+        modalOctaveButtons.innerHTML = '';
+        OCTAVES.forEach(octave => {
+            const button = document.createElement('button');
+            button.textContent = octave;
+            button.dataset.octave = octave;
+            modalOctaveButtons.appendChild(button);
+        });
+    }
+
+    // Initial UI setup
+    baseNoteDisplayButton.textContent = `${baseNote}${baseOctave}`;
+    bpmDisplayButton.textContent = bpm;
+    rateDisplayButton.textContent = modalRateText;
     createSequencerGrid();
     createSelectorTicks();
     createSeqMaxButtons();
+    createModalNoteButtons();
+    createModalOctaveButtons();
     updateAllStepsUI();
 });

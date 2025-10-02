@@ -348,3 +348,150 @@ button:active {
 #reset-button {
     background-color: #888;
 }
+
+/* BPM Rate Controls */
+.bpm-rate-controls {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.display-button {
+    background-color: var(--tertiary-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 1.1em;
+    text-align: center;
+}
+
+#base-note-display-button {
+    width: 110px;
+}
+
+.bpm-rate-controls .display-button {
+    width: 50%;
+}
+
+/* BPM/Rate Modal */
+#bpm-rate-modal .modal-content {
+    max-width: 450px;
+}
+
+.bpm-editor, .rate-editor {
+    margin-bottom: 25px;
+}
+
+.bpm-editor h3, .rate-editor h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+    color: var(--text-color);
+    opacity: 0.9;
+}
+
+.bpm-adjust-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bpm-adjust-controls button {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5em;
+    border-radius: 50%; /* Make buttons circular */
+    background-color: var(--tertiary-bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    line-height: 1;
+}
+
+#modal-bpm-value {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: var(--accent-color);
+    min-width: 100px;
+}
+
+.rate-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+}
+
+.rate-buttons button {
+    background-color: var(--tertiary-bg);
+    padding: 15px 10px;
+    font-size: 1em;
+    border: 1px solid var(--border-color);
+}
+
+.rate-buttons button.selected {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+}
+
+#done-bpm-rate-button {
+    width: 100%;
+    padding: 20px;
+    font-size: 1.3em;
+}
+
+#modal-step-number {
+    color: var(--text-color);
+    opacity: 0.6;
+    font-weight: normal;
+    font-size: 0.9em;
+    margin-left: 8px;
+}
+
+/* Base Note Modal */
+.note-name-editor, .octave-editor {
+    margin-bottom: 25px;
+}
+
+.note-name-editor h3, .octave-editor h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+    color: var(--text-color);
+    opacity: 0.9;
+}
+
+.note-name-buttons {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+}
+
+.octave-buttons {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+
+.note-name-buttons button, .octave-buttons button {
+    background-color: var(--tertiary-bg);
+    padding: 15px 5px;
+    font-size: 1em;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.note-name-buttons button.selected, .octave-buttons button.selected {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+    font-weight: bold;
+}
+
+#done-base-note-button {
+    width: 100%;
+    padding: 20px;
+    font-size: 1.3em;
+}
