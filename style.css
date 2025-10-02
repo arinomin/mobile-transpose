@@ -35,11 +35,12 @@ h1 {
 .global-controls {
     display: flex;
     justify-content: space-around;
-    align-items: center;
+    align-items: flex-start; /* Align labels to top */
     background-color: var(--secondary-bg);
     padding: 20px 15px;
     border-radius: 12px;
     margin-bottom: 25px;
+    gap: 15px; /* Add space between groups */
 }
 
 .playback-controls {
@@ -55,9 +56,12 @@ h1 {
 .control-group {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch; /* Make children fill width */
     gap: 10px;
+    flex-grow: 1;
+    flex-basis: 0;
 }
+
 
 .base-note-selectors, .rate-controls {
     display: flex;
@@ -349,13 +353,7 @@ button:active {
     background-color: #888;
 }
 
-/* BPM Rate Controls */
-.bpm-rate-controls {
-    display: flex;
-    gap: 10px;
-    width: 100%;
-}
-
+/* Display Buttons */
 .display-button {
     background-color: var(--tertiary-bg);
     color: var(--text-color);
@@ -364,14 +362,11 @@ button:active {
     padding: 12px;
     font-size: 1.1em;
     text-align: center;
+    width: 100%; /* Fill parent .control-group */
 }
 
-#base-note-display-button {
-    width: 110px;
-}
-
-.bpm-rate-controls .display-button {
-    width: 50%;
+#bpm-rate-display-button {
+    white-space: nowrap; /* Prevent wrapping inside the button */
 }
 
 /* BPM/Rate Modal */

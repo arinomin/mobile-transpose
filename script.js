@@ -16,10 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetBtn = document.getElementById('reset-button');
     const selectorTicks = document.querySelector('.selector-ticks');
 
-    // BPM/Rate Modal Elements
+    // Modal Elements
     const bpmRateModal = document.getElementById('bpm-rate-modal');
-    const bpmDisplayButton = document.getElementById('bpm-display-button');
-    const rateDisplayButton = document.getElementById('rate-display-button');
+    const bpmRateDisplayButton = document.getElementById('bpm-rate-display-button');
     const closeBpmRateModalButton = document.getElementById('close-bpm-rate-modal-button');
     const doneBpmRateButton = document.getElementById('done-bpm-rate-button');
     const modalBpmValue = document.getElementById('modal-bpm-value');
@@ -29,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const bpmUp10 = document.getElementById('bpm-up-10');
     const modalRateButtons = document.getElementById('modal-rate-buttons');
 
-    // Base Note Modal Elements
     const baseNoteModal = document.getElementById('base-note-modal');
     const baseNoteDisplayButton = document.getElementById('base-note-display-button');
     const closeBaseNoteModalButton = document.getElementById('close-base-note-modal-button');
@@ -249,8 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyBpmRateChanges() {
         bpm = modalBpm;
         rate = modalRate;
-        bpmDisplayButton.textContent = bpm;
-        rateDisplayButton.textContent = modalRateText;
+        bpmRateDisplayButton.textContent = `${bpm} / ${modalRateText}`;
         closeBpmRateModal();
     }
 
@@ -305,8 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // BPM/Rate Modal
-    bpmDisplayButton.addEventListener('click', openBpmRateModal);
-    rateDisplayButton.addEventListener('click', openBpmRateModal);
+    bpmRateDisplayButton.addEventListener('click', openBpmRateModal);
     closeBpmRateModalButton.addEventListener('click', closeBpmRateModal);
     doneBpmRateButton.addEventListener('click', applyBpmRateChanges);
     bpmRateModal.addEventListener('click', (e) => { if (e.target === bpmRateModal) closeBpmRateModal(); });
@@ -432,8 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial UI setup
     baseNoteDisplayButton.textContent = `${baseNote}${baseOctave}`;
-    bpmDisplayButton.textContent = bpm;
-    rateDisplayButton.textContent = modalRateText;
+    bpmRateDisplayButton.textContent = `${bpm} / ${modalRateText}`;
     createSequencerGrid();
     createSelectorTicks();
     createSeqMaxButtons();
