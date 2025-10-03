@@ -164,11 +164,11 @@ button:active {
 }
 
 .sequencer-grid {
-    display: inline-grid; /* MODIFIED */
+    display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: clamp(5px, 2vw, 12px); /* Responsive gap */
+    gap: 2vw; /* Simplified responsive value */
     background-color: var(--secondary-bg);
-    padding: clamp(10px, 4vw, 20px); /* Responsive padding */
+    padding: 3vw; /* Simplified responsive value */
     border-radius: 12px;
 }
 
