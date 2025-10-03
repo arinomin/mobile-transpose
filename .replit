@@ -34,5 +34,5 @@ localPort = 5000
 externalPort = 80
 
 [deployment]
-deploymentTarget = "autoscale"
-run = ["python", "-m", "http.server", "5000", "--bind", "0.0.0.0"]
+deploymentTarget = "static"
+publicDir = "index.html"
