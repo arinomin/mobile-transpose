@@ -6,6 +6,12 @@
     --text-color: #f0f0f0;
     --border-color: #4a4a4a;
     --highlight-color: #77dd77; /* Changed to a softer green */
+    --play-button-bg: rgba(119, 221, 119, 0.25); /* Frosted green */
+    --stop-button-bg: #ff4d4d;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
 }
 
 body {
@@ -13,18 +19,20 @@ body {
     background-color: var(--primary-bg);
     color: var(--text-color);
     margin: 0;
-    padding: 15px;
+    padding: 0; /* MODIFIED */
     display: flex;
     justify-content: center;
     align-items: flex-start; /* Align to top */
     min-height: 100vh;
     -webkit-tap-highlight-color: transparent; /* Disable tap highlight on iOS */
+    overflow-x: hidden; /* ADDED */
 }
 
 .container {
     width: 100%;
     max-width: 500px;
     text-align: center;
+    padding: 15px; /* ADDED */
 }
 
 h1 {
@@ -45,12 +53,16 @@ h1 {
 
 .playback-controls {
     display: flex;
-    justify-content: space-around;
-    align-items: center;
+    flex-direction: column; /* MODIFIED */
+    gap: 15px; /* MODIFIED */
     background-color: var(--secondary-bg);
     padding: 20px 15px;
     border-radius: 12px;
-    margin-top: 25px; /* Added margin-top */
+    margin-top: 25px;
+}
+
+.playback-controls button {
+    width: 100%;
 }
 
 .control-group {
@@ -138,8 +150,17 @@ button:active {
     transform: scale(0.96);
 }
 
+#play-once, #play-loop {
+    background-color: var(--play-button-bg);
+    color: var(--text-color);
+    border: 1px solid rgba(119, 221, 119, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
 #stop {
-    background-color: #ff4d4d;
+    background-color: var(--stop-button-bg);
+    backdrop-filter: none;
 }
 
 .sequencer-grid {
