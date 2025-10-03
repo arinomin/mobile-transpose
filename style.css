@@ -19,20 +19,18 @@ body {
     background-color: var(--primary-bg);
     color: var(--text-color);
     margin: 0;
-    padding: 0; /* MODIFIED */
-    display: flex;
-    justify-content: center;
-    align-items: flex-start; /* Align to top */
+    padding: 0; 
     min-height: 100vh;
     -webkit-tap-highlight-color: transparent; /* Disable tap highlight on iOS */
-    overflow-x: hidden; /* ADDED */
+    overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
 .container {
     width: 100%;
     max-width: 500px;
     text-align: center;
-    padding: 15px; /* ADDED */
+    padding: 15px; 
+    margin: 0 auto; /* Center the container */
 }
 
 h1 {
@@ -43,18 +41,18 @@ h1 {
 .global-controls {
     display: flex;
     justify-content: space-around;
-    align-items: flex-start; /* Align labels to top */
+    align-items: flex-start; 
     background-color: var(--secondary-bg);
     padding: 20px 15px;
     border-radius: 12px;
     margin-bottom: 25px;
-    gap: 15px; /* Add space between groups */
+    gap: 15px; 
 }
 
 .playback-controls {
     display: flex;
-    flex-direction: column; /* MODIFIED */
-    gap: 15px; /* MODIFIED */
+    flex-direction: column; 
+    gap: 15px; 
     background-color: var(--secondary-bg);
     padding: 20px 15px;
     border-radius: 12px;
@@ -68,7 +66,7 @@ h1 {
 .control-group {
     display: flex;
     flex-direction: column;
-    align-items: stretch; /* Make children fill width */
+    align-items: stretch; 
     gap: 10px;
     flex-grow: 1;
     flex-basis: 0;
@@ -150,7 +148,7 @@ button:active {
     transform: scale(0.96);
 }
 
-#play-once, #play-loop {
+#play-stop-button {
     background-color: var(--play-button-bg);
     color: var(--text-color);
     border: 1px solid rgba(119, 221, 119, 0.4);
@@ -158,13 +156,15 @@ button:active {
     -webkit-backdrop-filter: blur(8px);
 }
 
-#stop {
+#play-stop-button.playing {
     background-color: var(--stop-button-bg);
+    color: white;
+    border: none;
     backdrop-filter: none;
 }
 
 .sequencer-grid {
-    display: grid;
+    display: inline-grid; /* MODIFIED */
     grid-template-columns: repeat(4, 1fr);
     gap: clamp(5px, 2vw, 12px); /* Responsive gap */
     background-color: var(--secondary-bg);

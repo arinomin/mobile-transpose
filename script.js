@@ -1,9 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const seqMaxButtonsContainer = document.getElementById('seq-max-buttons');
-    const playOnceBtn = document.getElementById('play-once');
-    const playLoopBtn = document.getElementById('play-loop');
-    const stopBtn = document.getElementById('stop');
+    const playStopBtn = document.getElementById('play-stop-button'); // MODIFIED
     const sequencerGrid = document.getElementById('sequencer-grid');
     const stepModal = document.getElementById('step-modal');
     const closeModalBtn = document.getElementById('close-modal-button');
@@ -56,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let steps = Array(STEPS_COUNT).fill(0).map(() => ({ transpose: 0 }));
     let currentStep = 0;
     let isPlaying = false;
-    let isLooping = false;
+    let isLooping = false; // Kept for sequencer logic, but will always be true during play
     let timerId = null;
     let activeStepElement = null;
     let editedStepIndex = null;
@@ -138,22 +136,26 @@ document.addEventListener('DOMContentLoaded', () => {
         currentStep++;
 
         if (currentStep >= seqMax && !isLooping) {
-            stopPlayback();
+            stopPlayback(); // This part is now for non-looping (if ever used), but we will always loop
         } else {
             scheduleNextStep();
         }
     }
 
-    function startPlayback(loop = false) {
+    function startPlayback() { // MODIFIED
         initAudio();
         if (isPlaying) return;
         isPlaying = true;
-        isLooping = loop;
+        isLooping = true; // Always loop
         currentStep = 0;
+        
+        playStopBtn.textContent = 'Stop';
+        playStopBtn.classList.add('playing');
+
         step();
     }
 
-    function stopPlayback() {
+    function stopPlayback() { // MODIFIED
         if (!isPlaying) return;
         isPlaying = false;
         isLooping = false;
@@ -164,6 +166,9 @@ document.addEventListener('DOMContentLoaded', () => {
             activeStepElement = null;
         }
         currentStep = 0;
+
+        playStopBtn.textContent = 'Play';
+        playStopBtn.classList.remove('playing');
     }
 
     // --- UI Update ---
@@ -284,9 +289,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Event Listeners ---
-    playOnceBtn.addEventListener('click', () => startPlayback(false));
-    playLoopBtn.addEventListener('click', () => startPlayback(true));
-    stopBtn.addEventListener('click', stopPlayback);
+    playStopBtn.addEventListener('click', () => { // MODIFIED
+        if (isPlaying) {
+            stopPlayback();
+        } else {
+            startPlayback();
+        }
+    });
 
     // Step Modal
     stepModal.addEventListener('click', (e) => { if (e.target === stepModal) closeStepModal(); });
