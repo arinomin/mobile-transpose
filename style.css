@@ -145,9 +145,9 @@ button:active {
 .sequencer-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
+    gap: clamp(5px, 2vw, 12px); /* Responsive gap */
     background-color: var(--secondary-bg);
-    padding: 20px;
+    padding: clamp(10px, 4vw, 20px); /* Responsive padding */
     border-radius: 12px;
 }
 
