@@ -33,6 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalNoteNameButtons = document.getElementById('modal-note-name-buttons');
     const modalOctaveButtons = document.getElementById('modal-octave-buttons');
 
+    const melodyGenModal = document.getElementById('melody-gen-modal');
+    const melodyGenButton = document.getElementById('melody-gen-button');
+    const closeMelodyGenModalButton = document.getElementById('close-melody-gen-modal-button');
+
     // --- Constants ---
     const STEPS_COUNT = 16;
     const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -288,6 +292,15 @@ document.addEventListener('DOMContentLoaded', () => {
         closeBaseNoteModal();
     }
 
+    // --- Melody Gen Modal Logic ---
+    function openMelodyGenModal() {
+        melodyGenModal.style.display = 'flex';
+    }
+
+    function closeMelodyGenModal() {
+        melodyGenModal.style.display = 'none';
+    }
+
     // --- Event Listeners ---
     playStopBtn.addEventListener('click', () => { // MODIFIED
         if (isPlaying) {
@@ -351,6 +364,11 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.classList.add('selected');
         }
     });
+
+    // Melody Gen Modal
+    melodyGenButton.addEventListener('click', openMelodyGenModal);
+    closeMelodyGenModalButton.addEventListener('click', closeMelodyGenModal);
+    melodyGenModal.addEventListener('click', (e) => { if (e.target === melodyGenModal) closeMelodyGenModal(); });
 
     // Transpose Selector Drag Logic
     let isDragging = false;

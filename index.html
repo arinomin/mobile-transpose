@@ -19,6 +19,10 @@
                 <label>BPM / Rate</label>
                 <button id="bpm-rate-display-button" class="display-button">120 / 16分</button>
             </div>
+            <div class="control-group">
+                <label>Melody</label>
+                <button id="melody-gen-button" class="display-button">Generate</button>
+            </div>
         </div>
 
         <div id="sequencer-grid" class="sequencer-grid"></div>
@@ -121,6 +125,21 @@
             </div>
             <div class="modal-footer">
                 <button id="done-base-note-button">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="melody-gen-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Melody Generator</h2>
+                <button id="close-melody-gen-modal-button" class="close-button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Melody generation options will go here.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="generate-melody-button">Generate</button>
             </div>
         </div>
     </div>
