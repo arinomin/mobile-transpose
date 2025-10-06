@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerId = null;
     let activeStepElement = null;
     let editedStepIndex = null;
+    let currentOscillator = null; // For legato playback
 
     // Temporary modal states
     let modalBpm = bpm;
@@ -85,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let previewSteps = null;
     let isPreviewPlaying = false;
     let previewTimerId = null;
+    let currentPreviewOscillator = null; // For legato preview playback
 
 
     // --- Web Audio API Initialization ---
@@ -114,18 +116,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Sound Playback ---
-    function playSound(midiNote, duration = 0.15) {
-        if (!audioContext) return;
+    function playSound(midiNote) {
+        if (!audioContext) return null;
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(midiToFreq(midiNote), audioContext.currentTime);
         gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
         oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + duration);
+        return oscillator;
+    }
+
+    function playAuditionSound(midiNote, duration = 0.4) {
+        if (!audioContext) return;
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        const now = audioContext.currentTime;
+        const releaseTime = 0.1;
+        const sustainDuration = Math.max(0, duration - releaseTime);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(midiToFreq(midiNote), now);
+        gainNode.gain.setValueAtTime(0.4, now);
+        gainNode.gain.setValueAtTime(0.4, now + sustainDuration);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start(now);
+        oscillator.stop(now + duration);
     }
     
     // --- Sequencer Logic ---
@@ -138,6 +158,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function step() {
         if (!isPlaying) return;
+
+        if (currentOscillator) {
+            currentOscillator.stop(audioContext.currentTime);
+        }
 
         if (activeStepElement) {
             activeStepElement.classList.remove('active');
@@ -152,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const baseMidi = noteToMidi(baseNote, baseOctave);
         const finalMidi = baseMidi + stepData.transpose;
-        playSound(finalMidi);
+        currentOscillator = playSound(finalMidi);
 
         currentStep++;
 
@@ -182,6 +206,12 @@ document.addEventListener('DOMContentLoaded', () => {
         isLooping = false;
         clearTimeout(timerId);
         timerId = null;
+
+        if (currentOscillator) {
+            currentOscillator.stop(audioContext.currentTime);
+            currentOscillator = null;
+        }
+
         if (activeStepElement) {
             activeStepElement.classList.remove('active');
             activeStepElement = null;
@@ -320,12 +350,16 @@ document.addEventListener('DOMContentLoaded', () => {
         isPreviewPlaying = false;
         clearTimeout(previewTimerId);
         previewTimerId = null;
-        // Clear any active highlights from preview
+
+        if (currentPreviewOscillator) {
+            currentPreviewOscillator.stop(audioContext.currentTime);
+            currentPreviewOscillator = null;
+        }
+
         const activePreviewStep = sequencerGrid.querySelector('.active-preview');
         if (activePreviewStep) {
             activePreviewStep.classList.remove('active-preview');
         }
-        // Re-enable buttons
         previewMelodyButton.disabled = false;
         applyMelodyButton.disabled = previewSteps === null;
     }
@@ -356,6 +390,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            if (currentPreviewOscillator) {
+                currentPreviewOscillator.stop(audioContext.currentTime);
+            }
+
             if (previousStepEl) {
                 previousStepEl.classList.remove('active-preview');
             }
@@ -367,14 +405,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const baseMidi = noteToMidi(baseNote, baseOctave);
             const finalMidi = baseMidi + stepData.transpose;
-            playSound(finalMidi);
+            currentPreviewOscillator = playSound(finalMidi);
 
             previewStep++;
 
             if (previewStep >= seqMax) {
-                // End of preview
                 previewTimerId = setTimeout(() => {
-                    if(previousStepEl) previousStepEl.classList.remove('active-preview');
                     stopPreview();
                 }, (60000 / bpm) / rate);
             } else {
@@ -421,7 +457,6 @@ document.addEventListener('DOMContentLoaded', () => {
         previewSteps = newMelody;
         applyMelodyButton.disabled = false;
         
-        // Visually update grid with preview data without saving
         for (let i = 0; i < STEPS_COUNT; i++) {
             updateStepUI(i, previewSteps[i]);
         }
@@ -456,7 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const transpose = Math.round(percentage * 24) - 12;
         const baseMidi = noteToMidi(baseNote, baseOctave);
         const finalMidi = baseMidi + transpose;
-        playSound(finalMidi);
+        playAuditionSound(finalMidi);
     });
 
     // BPM/Rate Modal
