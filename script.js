@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const seqMaxButtonsContainer = document.getElementById('seq-max-buttons');
-    const playStopBtn = document.getElementById('play-stop-button');
     const sequencerGrid = document.getElementById('sequencer-grid');
     const stepModal = document.getElementById('step-modal');
     const closeModalBtn = document.getElementById('close-modal-button');
@@ -13,6 +12,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const auditionBtn = document.getElementById('audition-button');
     const resetBtn = document.getElementById('reset-button');
     const selectorTicks = document.querySelector('.selector-ticks');
+
+    // Action Buttons (Desktop & Mobile)
+    const playStopBtnDesktop = document.getElementById('play-stop-button-desktop');
+    const playStopBtnMobile = document.getElementById('play-stop-button-mobile');
+    const melodyGenBtnDesktop = document.getElementById('melody-gen-button-desktop');
+    const melodyGenBtnMobile = document.getElementById('melody-gen-button-mobile');
+    const allPlayStopButtons = [playStopBtnDesktop, playStopBtnMobile];
 
     // Modal Elements
     const bpmRateModal = document.getElementById('bpm-rate-modal');
@@ -34,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalOctaveButtons = document.getElementById('modal-octave-buttons');
 
     const melodyGenModal = document.getElementById('melody-gen-modal');
-    const melodyGenButton = document.getElementById('melody-gen-button');
     const closeMelodyGenModalButton = document.getElementById('close-melody-gen-modal-button');
     const melodyKeySelect = document.getElementById('melody-key-select');
     const melodyScaleSelect = document.getElementById('melody-scale-select');
@@ -73,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerId = null;
     let activeStepElement = null;
     let editedStepIndex = null;
-    let currentOscillator = null; // For legato playback
+    let currentOscillator = null;
 
     // Temporary modal states
     let modalBpm = bpm;
@@ -86,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let previewSteps = null;
     let isPreviewPlaying = false;
     let previewTimerId = null;
-    let currentPreviewOscillator = null; // For legato preview playback
+    let currentPreviewOscillator = null;
 
 
     // --- Web Audio API Initialization ---
@@ -149,6 +154,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // --- Sequencer Logic ---
+    function updatePlayButtons(playing) {
+        allPlayStopButtons.forEach(btn => {
+            if (btn) btn.classList.toggle('playing', playing);
+        });
+    }
+
     function scheduleNextStep() {
         const interval = (60000 / bpm) / rate;
         if (isPlaying) {
@@ -193,10 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isPlaying = true;
         isLooping = true;
         currentStep = 0;
-        
-        playStopBtn.textContent = 'Stop';
-        playStopBtn.classList.add('playing');
-
+        updatePlayButtons(true);
         step();
     }
 
@@ -217,9 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activeStepElement = null;
         }
         currentStep = 0;
-
-        playStopBtn.textContent = 'Play';
-        playStopBtn.classList.remove('playing');
+        updatePlayButtons(false);
     }
 
     // --- UI Update ---
@@ -473,13 +479,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Event Listeners ---
-    playStopBtn.addEventListener('click', () => {
+    function handlePlayStop() {
         if (isPlaying) {
             stopPlayback();
         } else {
             startPlayback();
         }
-    });
+    }
+
+    allPlayStopButtons.forEach(btn => btn.addEventListener('click', handlePlayStop));
+
+    melodyGenBtnDesktop.addEventListener('click', openMelodyGenModal);
+    melodyGenBtnMobile.addEventListener('click', openMelodyGenModal);
 
     // Step Modal
     stepModal.addEventListener('click', (e) => { if (e.target === stepModal) closeStepModal(); });
@@ -537,7 +548,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Melody Gen Modal
-    melodyGenButton.addEventListener('click', openMelodyGenModal);
     closeMelodyGenModalButton.addEventListener('click', closeMelodyGenModal);
     melodyGenModal.addEventListener('click', (e) => { if (e.target === melodyGenModal) closeMelodyGenModal(); });
     previewMelodyButton.addEventListener('click', generateAndPreviewMelody);
@@ -636,4 +646,5 @@ document.addEventListener('DOMContentLoaded', () => {
     createModalNoteButtons();
     createModalOctaveButtons();
     updateAllStepsUI();
+    updatePlayButtons(false); // Set initial state
 });

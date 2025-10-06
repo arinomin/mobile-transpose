@@ -30,16 +30,22 @@
 
         <!-- Desktop-only action buttons -->
         <div class="desktop-actions">
-            <button id="play-stop-button">Play</button>
-            <button id="melody-gen-button">Generate Melody</button>
+            <button id="play-stop-button-desktop" class="play-stop-button">
+                <svg class="icon-play" viewBox="0 0 24 24" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>
+                <svg class="icon-stop" viewBox="0 0 24 24" width="24" height="24"><path d="M6 6h12v12H6z"/></svg>
+            </button>
+            <button id="melody-gen-button-desktop">Generate Melody</button>
         </div>
 
     </div>
 
     <!-- Mobile-only footer menu -->
     <footer class="footer-menu">
-        <button id="melody-gen-button" class="footer-button-gen">Generate</button>
-        <button id="play-stop-button" class="footer-button-play">Play</button>
+        <button id="melody-gen-button-mobile" class="footer-button-gen">Generate</button>
+        <button id="play-stop-button-mobile" class="play-stop-button footer-button-play">
+            <svg class="icon-play" viewBox="0 0 24 24" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>
+            <svg class="icon-stop" viewBox="0 0 24 24" width="24" height="24"><path d="M6 6h12v12H6z"/></svg>
+        </button>
         <div class="footer-spacer"></div>
     </footer>
 
