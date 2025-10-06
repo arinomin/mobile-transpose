@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- State ---
     let audioContext;
+    let masterGainNode;
     let bpm = 120;
     let rate = 4;
     let baseNote = 'C';
@@ -74,11 +75,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let steps = Array(STEPS_COUNT).fill(0).map(() => ({ transpose: 0 }));
     let currentStep = 0;
     let isPlaying = false;
-    let isLooping = false;
-    let timerId = null;
-    let activeStepElement = null;
     let editedStepIndex = null;
-    let currentOscillator = null;
+
+    // --- New Scheduler State ---
+    let nextNoteTime = 0.0;
+    let scheduleAheadTime = 0.1; // How far ahead to schedule audio (sec)
+    let schedulerLookahead = 25.0; // How often to call scheduler function (ms)
+    let schedulerTimerId = null;
+    let lastStepDrawn = -1;
+    let notesInQueue = [];
 
     // Temporary modal states
     let modalBpm = bpm;
@@ -99,6 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (audioContext) return;
         try {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            masterGainNode = audioContext.createGain();
+            masterGainNode.connect(audioContext.destination);
+            masterGainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
         } catch (e) {
             alert('Web Audio API is not supported in this browser.');
         }
@@ -120,81 +128,93 @@ document.addEventListener('DOMContentLoaded', () => {
         return NOTE_NAMES[noteIndex] + octave;
     }
 
-    // --- Sound Playback ---
-    function playSound(midiNote) {
-        if (!audioContext) return null;
+    // --- Sound Playback (Refactored for proper scheduling and no clicks) ---
+    function playNote(midiNote, startTime, duration) {
+        if (!audioContext) return;
+        
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
+        
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(midiToFreq(midiNote), audioContext.currentTime);
-        gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(midiToFreq(midiNote), startTime);
+
+        // --- Gain envelope to prevent clicks ---
+        const attackTime = 0.01;
+        const releaseTime = 0.05;
+        const sustainLevel = 0.4;
+
+        gainNode.connect(masterGainNode);
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(sustainLevel, startTime + attackTime);
+        gainNode.gain.setValueAtTime(sustainLevel, startTime + duration - releaseTime);
+        gainNode.gain.linearRampToValueAtTime(0, startTime + duration);
+
         oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        oscillator.start(audioContext.currentTime);
-        return oscillator;
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
     }
 
     function playAuditionSound(midiNote, duration = 0.4) {
-        if (!audioContext) return;
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        initAudio();
         const now = audioContext.currentTime;
-        const releaseTime = 0.1;
-        const sustainDuration = Math.max(0, duration - releaseTime);
-
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(midiToFreq(midiNote), now);
-        gainNode.gain.setValueAtTime(0.4, now);
-        gainNode.gain.setValueAtTime(0.4, now + sustainDuration);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        oscillator.start(now);
-        oscillator.stop(now + duration);
+        playNote(midiNote, now, duration);
     }
     
-    // --- Sequencer Logic ---
+    // --- Sequencer Logic (New Scheduler) ---
     function updatePlayButtons(playing) {
         allPlayStopButtons.forEach(btn => {
             if (btn) btn.classList.toggle('playing', playing);
         });
     }
 
-    function scheduleNextStep() {
-        const interval = (60000 / bpm) / rate;
-        if (isPlaying) {
-            timerId = setTimeout(step, interval);
-        }
+    function nextNote() {
+        const secondsPerBeat = 60.0 / bpm;
+        const noteDurationInBeats = 4.0 / rate;
+        nextNoteTime += (noteDurationInBeats * secondsPerBeat) / 4; // Assuming 16th notes are the base for rate=4
+        
+        currentStep = (currentStep + 1) % seqMax;
     }
 
-    function step() {
-        if (!isPlaying) return;
+    function scheduleNote(stepNumber, time) {
+        notesInQueue.push({ note: stepNumber, time: time });
 
-        if (currentOscillator) {
-            currentOscillator.stop(audioContext.currentTime);
-        }
-
-        if (activeStepElement) {
-            activeStepElement.classList.remove('active');
-        }
-
-        currentStep = currentStep % seqMax;
-
-        const stepData = steps[currentStep];
-        const stepElement = sequencerGrid.children[currentStep];
-        stepElement.classList.add('active');
-        activeStepElement = stepElement;
-
+        const stepData = steps[stepNumber];
         const baseMidi = noteToMidi(baseNote, baseOctave);
         const finalMidi = baseMidi + stepData.transpose;
-        currentOscillator = playSound(finalMidi);
+        const noteDuration = (60.0 / bpm) / rate;
 
-        currentStep++;
+        playNote(finalMidi, time, noteDuration);
+    }
 
-        if (currentStep >= seqMax && !isLooping) {
-            stopPlayback();
-        } else {
-            scheduleNextStep();
+    function scheduler() {
+        while (nextNoteTime < audioContext.currentTime + scheduleAheadTime) {
+            scheduleNote(currentStep, nextNoteTime);
+            nextNote();
+        }
+        schedulerTimerId = setTimeout(scheduler, schedulerLookahead);
+    }
+
+    function draw() {
+        let drawStep = lastStepDrawn;
+        const currentTime = audioContext.currentTime;
+
+        while (notesInQueue.length && notesInQueue[0].time < currentTime) {
+            drawStep = notesInQueue[0].note;
+            notesInQueue.shift();
+        }
+
+        if (lastStepDrawn !== drawStep) {
+            if (lastStepDrawn !== -1) {
+                sequencerGrid.children[lastStepDrawn].classList.remove('active');
+            }
+            lastStepDrawn = drawStep;
+            if (drawStep !== -1) {
+                sequencerGrid.children[drawStep].classList.add('active');
+            }
+        }
+        
+        if (isPlaying) {
+            requestAnimationFrame(draw);
         }
     }
 
@@ -202,28 +222,36 @@ document.addEventListener('DOMContentLoaded', () => {
         initAudio();
         if (isPlaying) return;
         isPlaying = true;
-        isLooping = true;
+        
         currentStep = 0;
+        nextNoteTime = audioContext.currentTime + 0.1; // Start with a small delay
+        scheduler(); // Start the scheduler loop
+        requestAnimationFrame(draw); // Start the drawing loop
+        
         updatePlayButtons(true);
-        step();
     }
 
     function stopPlayback() {
         if (!isPlaying) return;
         isPlaying = false;
-        isLooping = false;
-        clearTimeout(timerId);
-        timerId = null;
 
-        if (currentOscillator) {
-            currentOscillator.stop(audioContext.currentTime);
-            currentOscillator = null;
+        clearTimeout(schedulerTimerId);
+        schedulerTimerId = null;
+        
+        // Clear any future notes and visual feedback
+        notesInQueue = [];
+        if (lastStepDrawn !== -1) {
+            sequencerGrid.children[lastStepDrawn].classList.remove('active');
+            lastStepDrawn = -1;
         }
 
-        if (activeStepElement) {
-            activeStepElement.classList.remove('active');
-            activeStepElement = null;
-        }
+        // Ramp down master gain to stop any currently playing/scheduled notes abruptly but smoothly
+        masterGainNode.gain.cancelScheduledValues(audioContext.currentTime);
+        masterGainNode.gain.setValueAtTime(masterGainNode.gain.value, audioContext.currentTime);
+        masterGainNode.gain.linearRampToValueAtTime(0.0, audioContext.currentTime + 0.05);
+        // Restore gain for next playback
+        masterGainNode.gain.linearRampToValueAtTime(1.0, audioContext.currentTime + 0.1);
+
         currentStep = 0;
         updatePlayButtons(false);
     }
