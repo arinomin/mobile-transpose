@@ -36,6 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const melodyGenModal = document.getElementById('melody-gen-modal');
     const melodyGenButton = document.getElementById('melody-gen-button');
     const closeMelodyGenModalButton = document.getElementById('close-melody-gen-modal-button');
+    const melodyKeySelect = document.getElementById('melody-key-select');
+    const melodyScaleSelect = document.getElementById('melody-scale-select');
+    const generateMelodyButton = document.getElementById('generate-melody-button');
+
 
     // --- Constants ---
     const STEPS_COUNT = 16;
@@ -47,6 +51,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const BPM_MIN = 40;
     const BPM_MAX = 280;
+    const SCALES = {
+        'major': [0, 2, 4, 5, 7, 9, 11],
+        'minor': [0, 2, 3, 5, 7, 8, 10],
+        'majorPentatonic': [0, 2, 4, 7, 9],
+        'minorPentatonic': [0, 3, 5, 7, 10]
+    };
 
     // --- State ---
     let audioContext;
@@ -301,6 +311,51 @@ document.addEventListener('DOMContentLoaded', () => {
         melodyGenModal.style.display = 'none';
     }
 
+    function generateMelody() {
+        const key = melodyKeySelect.value;
+        const scaleName = melodyScaleSelect.value;
+        const scaleIntervals = SCALES[scaleName];
+
+        const rootNoteIndex = NOTE_NAMES.indexOf(key);
+        const baseMidi = noteToMidi(baseNote, baseOctave);
+
+        // Create a pool of valid transpose values relative to the baseNote
+        const transposePool = [];
+        // Generate notes for 3 octaves around the base note
+        for (let octave = -1; octave <= 1; octave++) {
+            for (const interval of scaleIntervals) {
+                const midiNote = rootNoteIndex + (baseOctave + octave) * 12 + interval;
+                transposePool.push(midiNote - baseMidi);
+            }
+        }
+        // Sort and remove duplicates
+        const uniqueTransposes = [...new Set(transposePool)].sort((a, b) => a - b);
+
+        // Start the random walk near transpose 0
+        let currentIndex = uniqueTransposes.indexOf(
+            uniqueTransposes.reduce((prev, curr) => Math.abs(curr) < Math.abs(prev) ? curr : prev, Infinity)
+        );
+
+        for (let i = 0; i < seqMax; i++) {
+            steps[i].transpose = uniqueTransposes[currentIndex];
+
+            // Decide next step (stay, up, or down)
+            const randomChoice = Math.random();
+            if (randomChoice < 0.2) {
+                // Stay (20% chance)
+            } else if (randomChoice < 0.6) {
+                // Go up (40% chance)
+                currentIndex = Math.min(uniqueTransposes.length - 1, currentIndex + 1);
+            } else {
+                // Go down (40% chance)
+                currentIndex = Math.max(0, currentIndex - 1);
+            }
+        }
+
+        updateAllStepsUI();
+        closeMelodyGenModal();
+    }
+
     // --- Event Listeners ---
     playStopBtn.addEventListener('click', () => { // MODIFIED
         if (isPlaying) {
@@ -369,6 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
     melodyGenButton.addEventListener('click', openMelodyGenModal);
     closeMelodyGenModalButton.addEventListener('click', closeMelodyGenModal);
     melodyGenModal.addEventListener('click', (e) => { if (e.target === melodyGenModal) closeMelodyGenModal(); });
+    generateMelodyButton.addEventListener('click', generateMelody);
 
     // Transpose Selector Drag Logic
     let isDragging = false;
