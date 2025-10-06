@@ -5,9 +5,10 @@
     --accent-color: #00aaff;
     --text-color: #f0f0f0;
     --border-color: #4a4a4a;
-    --highlight-color: #77dd77; /* Changed to a softer green */
-    --play-button-bg: rgba(119, 221, 119, 0.25); /* Frosted green */
+    --highlight-color: #77dd77;
+    --play-button-bg: rgba(119, 221, 119, 0.25);
     --stop-button-bg: #ff4d4d;
+    --footer-height: 90px; /* Define footer height as a variable */
 }
 
 *, *::before, *::after {
@@ -19,18 +20,19 @@ body {
     background-color: var(--primary-bg);
     color: var(--text-color);
     margin: 0;
-    padding: 0; 
-    min-height: 100vh;
-    -webkit-tap-highlight-color: transparent; /* Disable tap highlight on iOS */
-    overflow-x: hidden; /* Prevent horizontal scroll */
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+    /* Add padding to the bottom to prevent footer overlap */
+    padding-bottom: var(--footer-height);
 }
 
 .container {
     width: 100%;
     max-width: 500px;
     text-align: center;
-    padding: 15px; 
-    margin: 0 auto; /* Center the container */
+    padding: 15px;
+    margin: 0 auto;
 }
 
 h1 {
@@ -39,42 +41,20 @@ h1 {
 }
 
 .global-controls {
-    display: flex;
-    justify-content: space-around;
-    align-items: flex-start; 
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    align-items: flex-start;
     background-color: var(--secondary-bg);
     padding: 20px 15px;
     border-radius: 12px;
     margin-bottom: 25px;
-    gap: 15px; 
-}
-
-.playback-controls {
-    display: flex;
-    flex-direction: column; 
-    gap: 15px; 
-    background-color: var(--secondary-bg);
-    padding: 20px 15px;
-    border-radius: 12px;
-    margin-top: 25px;
-}
-
-.playback-controls button {
-    width: 100%;
+    gap: 15px;
 }
 
 .control-group {
     display: flex;
     flex-direction: column;
-    align-items: stretch; 
-    gap: 10px;
-    flex-grow: 1;
-    flex-basis: 0;
-}
-
-
-.base-note-selectors, .rate-controls {
-    display: flex;
+    align-items: stretch;
     gap: 10px;
 }
 
@@ -148,6 +128,29 @@ button:active {
     transform: scale(0.96);
 }
 
+/* --- Footer Menu --- */
+.footer-menu {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--footer-height);
+    background-color: var(--secondary-bg);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 0 15px;
+    z-index: 500;
+}
+
+.footer-menu button {
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 55px; /* Consistent height for footer buttons */
+}
+
 #play-stop-button {
     background-color: var(--play-button-bg);
     color: var(--text-color);
@@ -161,6 +164,12 @@ button:active {
     color: white;
     border: none;
     backdrop-filter: none;
+}
+
+#melody-gen-button {
+    background-color: var(--tertiary-bg);
+    border: 1px solid var(--accent-color);
+    color: var(--accent-color);
 }
 
 .sequencer-grid {
@@ -188,11 +197,11 @@ button:active {
 }
 
 .step.active {
-    background-color: rgba(119, 221, 119, 0.7); /* Use rgba for transparency */
-    color: var(--text-color); /* Change text color for better contrast */
+    background-color: rgba(119, 221, 119, 0.7);
+    color: var(--text-color);
     transform: scale(1.05);
     border-color: rgba(119, 221, 119, 0.9);
-    box-shadow: 0 0 12px rgba(119, 221, 119, 0.5); /* Add a glow effect */
+    box-shadow: 0 0 12px rgba(119, 221, 119, 0.5);
 }
 
 .step-number {
@@ -323,14 +332,6 @@ button:active {
     cursor: pointer;
 }
 
-.seq-max-controls {
-    background-color: var(--secondary-bg);
-    padding: 15px;
-    border-radius: 12px;
-    margin: 25px 0;
-    text-align: center;
-}
-
 .modal-header {
     display: flex;
     justify-content: space-between;
@@ -361,13 +362,13 @@ button:active {
 
 .modal-footer {
     display: flex;
-    justify-content: center; /* Center the buttons */
+    justify-content: center;
     margin-top: 30px;
-    gap: 20px; /* Increased gap */
+    gap: 20px;
 }
 
 .modal-footer button {
-    width: 45%; /* Adjust width */
+    width: 45%;
 }
 
 #reset-button {
@@ -383,11 +384,11 @@ button:active {
     padding: 12px;
     font-size: 1.1em;
     text-align: center;
-    width: 100%; /* Fill parent .control-group */
+    width: 100%;
 }
 
 #bpm-rate-display-button {
-    white-space: nowrap; /* Prevent wrapping inside the button */
+    white-space: nowrap;
 }
 
 /* BPM/Rate Modal */
@@ -417,7 +418,7 @@ button:active {
     width: 60px;
     height: 60px;
     font-size: 1.5em;
-    border-radius: 50%; /* Make buttons circular */
+    border-radius: 50%;
     background-color: var(--tertiary-bg);
     display: flex;
     justify-content: center;
@@ -506,8 +507,6 @@ button:active {
     font-weight: bold;
 }
 
-}
-
 /* Melody Gen Modal */
 .melody-gen-control {
     display: flex;
@@ -533,7 +532,7 @@ button:active {
 }
 
 .step.active-preview {
-    background-color: rgba(0, 170, 255, 0.7); /* accent-color with transparency */
+    background-color: rgba(0, 170, 255, 0.7);
     border-color: rgba(0, 170, 255, 0.9);
     box-shadow: 0 0 12px rgba(0, 170, 255, 0.5);
     transform: scale(1.05);
