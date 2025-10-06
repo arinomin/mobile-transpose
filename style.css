@@ -7,6 +7,8 @@
     --border-color: #4a4a4a;
     --play-color: #28a745;
     --stop-color: #dc3545;
+    --play-color-rgb: 40, 167, 69;
+    --stop-color-rgb: 220, 53, 69;
     --footer-height: 90px;
 }
 
@@ -15,22 +17,30 @@
 }
 
 /* --- Base & Container --- */
+html, body {
+    height: 100%;
+    overflow: hidden; /* Prevent bounce effect on mobile */
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--primary-bg);
     color: var(--text-color);
     margin: 0;
-    padding: 0;
     -webkit-tap-highlight-color: transparent;
-    overflow-x: hidden;
-    padding-bottom: var(--footer-height);
 }
 
 .container {
+    height: 100%;
+    overflow-y: auto; /* Make container scrollable */
+    padding: 16px;
+    padding-bottom: var(--footer-height); /* Space for the footer */
+}
+
+.container-inner {
     width: 100%;
     max-width: 500px;
     text-align: center;
-    padding: 16px;
     margin: 0 auto;
 }
 
@@ -129,7 +139,7 @@ button:disabled {
 }
 
 .step.active {
-    background-color: rgba(40, 167, 69, 0.5);
+    background-color: rgba(var(--play-color-rgb), 0.5);
     color: var(--text-color);
     transform: scale(1.05);
     border-color: var(--play-color);
@@ -210,7 +220,7 @@ button:disabled {
     height: 64px;
     border-radius: 50%;
     padding: 0;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(var(--play-color-rgb), 0.15);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 2px solid var(--play-color);
@@ -228,6 +238,7 @@ button:disabled {
 }
 
 .play-stop-button.playing {
+    background-color: rgba(var(--stop-color-rgb), 0.15);
     border-color: var(--stop-color);
     box-shadow: 0 0 12px -2px var(--stop-color);
 }
@@ -294,6 +305,10 @@ button:disabled {
 
 @media (min-width: 481px) {
     body {
+        padding-bottom: 0;
+    }
+
+    .container {
         padding-bottom: 16px; /* Add some padding at the end of the page */
     }
 
