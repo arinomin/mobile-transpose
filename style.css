@@ -531,3 +531,18 @@ button:active {
     width: 60%;
     text-align: center;
 }
+
+.step.active-preview {
+    background-color: rgba(0, 170, 255, 0.7); /* accent-color with transparency */
+    border-color: rgba(0, 170, 255, 0.9);
+    box-shadow: 0 0 12px rgba(0, 170, 255, 0.5);
+    transform: scale(1.05);
+}
+
+/* Style for disabled buttons */
+button:disabled {
+    background-color: var(--tertiary-bg);
+    color: #777;
+    cursor: not-allowed;
+    transform: scale(1);
+}

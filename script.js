@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const seqMaxButtonsContainer = document.getElementById('seq-max-buttons');
-    const playStopBtn = document.getElementById('play-stop-button'); // MODIFIED
+    const playStopBtn = document.getElementById('play-stop-button');
     const sequencerGrid = document.getElementById('sequencer-grid');
     const stepModal = document.getElementById('step-modal');
     const closeModalBtn = document.getElementById('close-modal-button');
@@ -38,7 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeMelodyGenModalButton = document.getElementById('close-melody-gen-modal-button');
     const melodyKeySelect = document.getElementById('melody-key-select');
     const melodyScaleSelect = document.getElementById('melody-scale-select');
-    const generateMelodyButton = document.getElementById('generate-melody-button');
+    const previewMelodyButton = document.getElementById('preview-melody-button');
+    const applyMelodyButton = document.getElementById('apply-melody-button');
 
 
     // --- Constants ---
@@ -68,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let steps = Array(STEPS_COUNT).fill(0).map(() => ({ transpose: 0 }));
     let currentStep = 0;
     let isPlaying = false;
-    let isLooping = false; // Kept for sequencer logic, but will always be true during play
+    let isLooping = false;
     let timerId = null;
     let activeStepElement = null;
     let editedStepIndex = null;
@@ -79,6 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let modalRateText = '16分';
     let modalBaseNote = baseNote;
     let modalBaseOctave = baseOctave;
+    
+    // Melody Generation State
+    let previewSteps = null;
+    let isPreviewPlaying = false;
+    let previewTimerId = null;
+
 
     // --- Web Audio API Initialization ---
     function initAudio() {
@@ -150,17 +157,17 @@ document.addEventListener('DOMContentLoaded', () => {
         currentStep++;
 
         if (currentStep >= seqMax && !isLooping) {
-            stopPlayback(); // This part is now for non-looping (if ever used), but we will always loop
+            stopPlayback();
         } else {
             scheduleNextStep();
         }
     }
 
-    function startPlayback() { // MODIFIED
+    function startPlayback() {
         initAudio();
         if (isPlaying) return;
         isPlaying = true;
-        isLooping = true; // Always loop
+        isLooping = true;
         currentStep = 0;
         
         playStopBtn.textContent = 'Stop';
@@ -169,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         step();
     }
 
-    function stopPlayback() { // MODIFIED
+    function stopPlayback() {
         if (!isPlaying) return;
         isPlaying = false;
         isLooping = false;
@@ -190,9 +197,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return transpose >= 0 ? `+${transpose}` : transpose;
     }
 
-    function updateStepUI(index) {
+    function updateStepUI(index, stepData) {
         const stepElement = sequencerGrid.children[index];
-        const stepData = steps[index];
         stepElement.querySelector('.step-transpose').textContent = formatTranspose(stepData.transpose);
         const baseMidi = noteToMidi(baseNote, baseOctave);
         const finalMidi = baseMidi + stepData.transpose;
@@ -201,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateAllStepsUI() {
         for (let i = 0; i < STEPS_COUNT; i++) {
-            updateStepUI(i);
+            updateStepUI(i, steps[i]);
         }
     }
 
@@ -230,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (save) {
             steps[editedStepIndex].transpose = transpose;
-            updateStepUI(editedStepIndex);
+            updateStepUI(editedStepIndex, steps[editedStepIndex]);
         }
     }
 
@@ -304,14 +310,81 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Melody Gen Modal Logic ---
     function openMelodyGenModal() {
+        if (isPlaying) stopPlayback();
+        previewSteps = null;
+        applyMelodyButton.disabled = true;
         melodyGenModal.style.display = 'flex';
     }
 
+    function stopPreview() {
+        isPreviewPlaying = false;
+        clearTimeout(previewTimerId);
+        previewTimerId = null;
+        // Clear any active highlights from preview
+        const activePreviewStep = sequencerGrid.querySelector('.active-preview');
+        if (activePreviewStep) {
+            activePreviewStep.classList.remove('active-preview');
+        }
+        // Re-enable buttons
+        previewMelodyButton.disabled = false;
+        applyMelodyButton.disabled = previewSteps === null;
+    }
+
     function closeMelodyGenModal() {
+        if (isPreviewPlaying) {
+            stopPreview();
+        }
+        previewSteps = null;
         melodyGenModal.style.display = 'none';
     }
 
-    function generateMelody() {
+    function playPreview(previewSequence) {
+        initAudio();
+        if (isPreviewPlaying) {
+            stopPreview();
+        }
+        isPreviewPlaying = true;
+        previewMelodyButton.disabled = true;
+        applyMelodyButton.disabled = true;
+
+        let previewStep = 0;
+        let previousStepEl = null;
+
+        function previewStepPlayer() {
+            if (!isPreviewPlaying) {
+                if(previousStepEl) previousStepEl.classList.remove('active-preview');
+                return;
+            }
+
+            if (previousStepEl) {
+                previousStepEl.classList.remove('active-preview');
+            }
+
+            const stepData = previewSequence[previewStep];
+            const stepElement = sequencerGrid.children[previewStep];
+            stepElement.classList.add('active-preview');
+            previousStepEl = stepElement;
+
+            const baseMidi = noteToMidi(baseNote, baseOctave);
+            const finalMidi = baseMidi + stepData.transpose;
+            playSound(finalMidi);
+
+            previewStep++;
+
+            if (previewStep >= seqMax) {
+                // End of preview
+                previewTimerId = setTimeout(() => {
+                    if(previousStepEl) previousStepEl.classList.remove('active-preview');
+                    stopPreview();
+                }, (60000 / bpm) / rate);
+            } else {
+                previewTimerId = setTimeout(previewStepPlayer, (60000 / bpm) / rate);
+            }
+        }
+        previewStepPlayer();
+    }
+
+    function generateAndPreviewMelody() {
         const key = melodyKeySelect.value;
         const scaleName = melodyScaleSelect.value;
         const scaleIntervals = SCALES[scaleName];
@@ -319,45 +392,53 @@ document.addEventListener('DOMContentLoaded', () => {
         const rootNoteIndex = NOTE_NAMES.indexOf(key);
         const baseMidi = noteToMidi(baseNote, baseOctave);
 
-        // Create a pool of valid transpose values relative to the baseNote
         const transposePool = [];
-        // Generate notes for 3 octaves around the base note
         for (let octave = -1; octave <= 1; octave++) {
             for (const interval of scaleIntervals) {
                 const midiNote = rootNoteIndex + (baseOctave + octave) * 12 + interval;
                 transposePool.push(midiNote - baseMidi);
             }
         }
-        // Sort and remove duplicates
         const uniqueTransposes = [...new Set(transposePool)].sort((a, b) => a - b);
 
-        // Start the random walk near transpose 0
         let currentIndex = uniqueTransposes.indexOf(
             uniqueTransposes.reduce((prev, curr) => Math.abs(curr) < Math.abs(prev) ? curr : prev, Infinity)
         );
 
-        for (let i = 0; i < seqMax; i++) {
-            steps[i].transpose = uniqueTransposes[currentIndex];
-
-            // Decide next step (stay, up, or down)
+        const newMelody = [];
+        for (let i = 0; i < STEPS_COUNT; i++) {
+            newMelody.push({ transpose: uniqueTransposes[currentIndex] });
             const randomChoice = Math.random();
             if (randomChoice < 0.2) {
-                // Stay (20% chance)
+                // Stay
             } else if (randomChoice < 0.6) {
-                // Go up (40% chance)
                 currentIndex = Math.min(uniqueTransposes.length - 1, currentIndex + 1);
             } else {
-                // Go down (40% chance)
                 currentIndex = Math.max(0, currentIndex - 1);
             }
         }
 
-        updateAllStepsUI();
-        closeMelodyGenModal();
+        previewSteps = newMelody;
+        applyMelodyButton.disabled = false;
+        
+        // Visually update grid with preview data without saving
+        for (let i = 0; i < STEPS_COUNT; i++) {
+            updateStepUI(i, previewSteps[i]);
+        }
+
+        playPreview(previewSteps);
+    }
+
+    function applyMelody() {
+        if (previewSteps) {
+            steps = JSON.parse(JSON.stringify(previewSteps)); // Deep copy
+            updateAllStepsUI();
+            closeMelodyGenModal();
+        }
     }
 
     // --- Event Listeners ---
-    playStopBtn.addEventListener('click', () => { // MODIFIED
+    playStopBtn.addEventListener('click', () => {
         if (isPlaying) {
             stopPlayback();
         } else {
@@ -424,7 +505,9 @@ document.addEventListener('DOMContentLoaded', () => {
     melodyGenButton.addEventListener('click', openMelodyGenModal);
     closeMelodyGenModalButton.addEventListener('click', closeMelodyGenModal);
     melodyGenModal.addEventListener('click', (e) => { if (e.target === melodyGenModal) closeMelodyGenModal(); });
-    generateMelodyButton.addEventListener('click', generateMelody);
+    previewMelodyButton.addEventListener('click', generateAndPreviewMelody);
+    applyMelodyButton.addEventListener('click', applyMelody);
+
 
     // Transpose Selector Drag Logic
     let isDragging = false;
