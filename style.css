@@ -116,18 +116,23 @@ button:disabled {
 /* --- Sequencer --- */
 .sequencer-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr); /* Add this to ensure square cells */
     gap: 8px;
     background-color: var(--secondary-bg);
     padding: 16px;
     border-radius: 12px;
+    margin: 24px auto; /* Center the grid and provide vertical spacing */
+    width: 100%; /* Make it responsive to the container's padding */
+    max-width: 500px; /* Prevent it from becoming too large on desktops */
+    aspect-ratio: 1 / 1; /* Enforce a square aspect ratio for the whole grid */
 }
 
 .step {
     background-color: var(--tertiary-bg);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 1 / 1; /* This is now slightly redundant but safe to keep */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -135,7 +140,10 @@ button:disabled {
     cursor: pointer;
     transition: background-color 0.2s, transform 0.1s;
     position: relative;
-    padding: 8px;
+    padding: 4px; /* Reduce padding slightly for smaller text */
+    overflow: hidden; /* Prevent content from spilling out */
+    min-width: 0; /* Fix for flex/grid sizing issues */
+    min-height: 0; /* Fix for flex/grid sizing issues */
 }
 
 .step.active {
@@ -155,19 +163,19 @@ button:disabled {
 
 .step-number {
     position: absolute;
-    top: 8px;
-    left: 8px;
-    font-size: 0.8em;
+    top: 4px; /* Adjust for new padding */
+    left: 4px; /* Adjust for new padding */
+    font-size: 0.7em; /* Slightly smaller */
     opacity: 0.5;
 }
 
 .step-transpose {
-    font-size: 1.8em;
+    font-size: 1.6em; /* Adjust to fit smaller cells */
     font-weight: bold;
 }
 
 .step-note {
-    font-size: 1em;
+    font-size: 0.9em; /* Adjust to fit smaller cells */
     opacity: 0.8;
 }
 
@@ -176,7 +184,8 @@ button:disabled {
     background-color: var(--secondary-bg);
     padding: 16px;
     border-radius: 12px;
-    margin: 24px 0;
+    margin: 24px auto; /* Center it to match the sequencer grid */
+    max-width: 500px; /* Match the sequencer grid max-width */
     text-align: center;
 }
 
