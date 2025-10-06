@@ -116,7 +116,7 @@ button:disabled {
 /* --- Sequencer --- */
 .sequencer-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
     background-color: var(--secondary-bg);
     padding: 16px;
