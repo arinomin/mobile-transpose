@@ -369,87 +369,30 @@ button:disabled {
 
 /* ▲▲▲ ここまで ▲▲▲ */
 
-/* ▼▼▼ ここからPC/タブレット用のレイアウトを定義 ▼▼▼ */
+@media (min-width: 481px) {
+    body {
+        padding-bottom: 0;
+    }
 
-@media (min-width: 769px) {
-    /* スマホ用のフッターは非表示に */
+    .container {
+        padding-bottom: 16px; /* Add some padding at the end of the page */
+    }
+
     .footer-menu {
         display: none;
     }
 
-    /* 全体のコンテナのpaddingを調整 */
-    .container {
-        padding: 24px;
-        height: 100vh; /* ビューポートの高さに合わせる */
-        overflow: hidden; /* コンテナのスクロールを無効化 */
-    }
-
-    /* メインレイアウトをGridに */
-    .main-layout {
-        display: grid;
-        grid-template-columns: 1fr 320px; /* 左側(可変)と右側(固定幅)に分割 */
-        gap: 24px;
-        height: 100%;
-    }
-
-    .main-content {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-
-    .main-content h1 {
-        margin-top: 0;
-        text-align: left;
-    }
-
-    /* シーケンサーグリッドをコンテナの高さに合わせて最大化 */
-    .sequencer-grid {
-        width: 100%;
-        height: auto;
-        max-width: none;
-        flex-grow: 1;
-        margin: 0;
-        /* グリッドの高さを幅に合わせて正方形に保つ */
-        aspect-ratio: 1 / 1;
-        max-height: calc(100vh - 100px); /* ヘッダーなどを考慮した最大高 */
-    }
-
-    /* --- サイドパネルのスタイル --- */
-    .side-panel {
-        background-color: var(--secondary-bg);
-        border-radius: 12px;
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-        overflow-y: auto; /* パネル内が長くなった場合にスクロール */
-    }
-
-    /* パネル内の各コントロールのマージンをリセット */
-    .side-panel .global-controls,
-    .side-panel .seq-max-controls,
-    .side-panel .desktop-actions {
-        margin: 0;
-    }
-
-    /* PC表示では .desktop-actions を表示 */
     .desktop-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         gap: 16px;
+        margin-top: 24px;
     }
 
-    .desktop-actions .play-stop-button {
-        grid-column: 1 / -1; /* ボタンを横幅いっぱいに */
-        height: 60px;
-    }
-
-    .desktop-actions #melody-gen-button-desktop,
-    .desktop-actions #share-button-desktop {
+    .desktop-actions [id="melody-gen-button-desktop"] {
         width: 100%;
-        padding: 16px 8px; /* ボタンのパディングを調整 */
-        font-size: 1em;
+        max-width: 250px;
     }
 }
 
