@@ -667,8 +667,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAllStepsUI();
     updatePlayButtons(false); // Set initial state
 
-    // --- Share & Load from URL (v2) ---
-    const SHARE_FORMAT_VERSION = 'v2';
+    // --- Share & Load from URL (v3) ---
+    const SHARE_FORMAT_VERSION = 'v3';
     const RATES = [4, 3, 2, 1.5, 1, 0.5, 0.25]; // For indexing
 
     function serializeState() {
@@ -676,16 +676,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const noteIndex = NOTE_NAMES.indexOf(state.baseNote);
         const stepStr = state.steps.map(s => (s.transpose + 12).toString(36)).join('');
 
-        const data = [
+        const parts = [
             SHARE_FORMAT_VERSION,
-            state.bpm.toString(36),
+            state.bpm.toString(36).padStart(2, '0'),
             rateIndex,
             noteIndex.toString(36),
             state.baseOctave,
             state.seqMax.toString(36),
             stepStr
         ];
-        return data.join('-');
+        return parts.join('');
     }
 
     function handleShare() {
@@ -705,16 +705,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const dataString = decodeURIComponent(window.location.hash.substring(1));
-            const parts = dataString.split('-');
-            const version = parts[0];
-
+            
+            const version = dataString.substring(0, 2);
             if (version !== SHARE_FORMAT_VERSION) {
-                // You could potentially handle old versions here if needed
                 console.warn(`URL data version (${version}) does not match current version (${SHARE_FORMAT_VERSION}).`);
+                // ここで古いバージョン(v2, v1)のデコード処理を呼び出すことも可能
                 return;
             }
 
-            const [_, bpm, rateIndex, noteIndex, baseOctave, seqMax, stepStr] = parts;
+            // --- Parse Fixed-Length String ---
+            let pos = 2;
+            const bpm = dataString.substring(pos, pos += 2);
+            const rateIndex = dataString.substring(pos, pos += 1);
+            const noteIndex = dataString.substring(pos, pos += 1);
+            const baseOctave = dataString.substring(pos, pos += 1);
+            const seqMax = dataString.substring(pos, pos += 1);
+            const stepStr = dataString.substring(pos);
 
             // --- Restore State ---
             state.bpm = parseInt(bpm, 36);
