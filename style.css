@@ -398,13 +398,13 @@ button:disabled {
 
 .modal-footer {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     margin-top: 32px;
     gap: 16px;
 }
 
 .modal-footer button {
-    width: 30%;
+    width: 45%;
 }
 
 #reset-button {

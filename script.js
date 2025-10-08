@@ -80,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
         isPlaying: false, // Covers both main and preview playback
         playbackMode: 'main', // 'main' or 'preview'
         editedStepIndex: null,
-        modalTranspose: 0,
         
         // Scheduler State
         nextNoteTime: 0.0,
@@ -319,9 +318,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function openStepModal(stepIndex) {
         if (state.isPlaying) stopPlayback();
         state.editedStepIndex = stepIndex;
-        state.modalTranspose = state.steps[stepIndex].transpose;
         modalStepNumber.textContent = `#${stepIndex + 1}`;
-        updateStepModalInfo(state.modalTranspose);
+        const transpose = state.steps[stepIndex].transpose;
+        updateStepModalInfo(transpose);
         stepModal.style.display = 'flex';
 
         // Add drag listeners only when modal is open
@@ -342,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.removeEventListener('touchend', endDrag);
     }
 
-    function updateStepModalInfo(transpose) {
+    function updateStepModalInfo(transpose, save = false) {
         transposeValueDisplay.textContent = formatTranspose(transpose);
         intervalNameDisplay.textContent = INTERVAL_NAMES[transpose] || '';
         const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
@@ -351,6 +350,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const handle = transposeSelector.querySelector('.selector-handle');
         const percentage = (transpose + 12) / 24;
         handle.style.left = `${percentage * 100}%`;
+
+        if (save) {
+            state.steps[state.editedStepIndex].transpose = transpose;
+            updateStepUI(state.editedStepIndex, state.steps[state.editedStepIndex]);
+        }
     }
 
     function handleSelectorInteraction(event) {
@@ -509,15 +513,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Step Modal
     stepModal.addEventListener('click', (e) => { if (e.target === stepModal) closeStepModal(); });
     closeModalBtn.addEventListener('click', closeStepModal);
-    doneStepBtn.addEventListener('click', applyStepChanges);
-    resetBtn.addEventListener('click', () => {
-        state.modalTranspose = 0;
-        updateStepModalInfo(0);
-    });
+    resetBtn.addEventListener('click', () => updateStepModalInfo(0, true));
     auditionBtn.addEventListener('click', () => {
         initAudio();
+        const percentage = parseFloat(transposeSelector.querySelector('.selector-handle').style.left) / 100;
+        const transpose = Math.round(percentage * 24) - 12;
         const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
-        const finalMidi = baseMidi + state.modalTranspose;
+        const finalMidi = baseMidi + transpose;
         playAuditionSound(finalMidi);
     });
 
@@ -769,7 +771,5 @@ document.addEventListener('DOMContentLoaded', () => {
     shareBtnMobile.addEventListener('click', handleShare);
 
     // Load state from URL when the page loads
-    loadStateFromHash();
-}); page loads
     loadStateFromHash();
 });
