@@ -262,24 +262,6 @@ button:disabled {
     display: block;
 }
 
-[id^="melody-gen-button"] {
-    background-color: transparent;
-    border: 2px solid var(--tertiary-bg);
-    color: var(--text-color);
-    font-weight: normal;
-}
-
-[id^="melody-gen-button"]:hover {
-    background-color: var(--tertiary-bg);
-}
-
-
-/* --- Layout Controls (Mobile vs Desktop) --- */
-
-.desktop-actions {
-    display: none;
-}
-
 /* ▼▼▼ ここからフッターメニューのスタイルを変更・追記 ▼▼▼ */
 
 .footer-menu {
@@ -333,10 +315,10 @@ button:disabled {
 }
 
 /* 各ボタンをグリッドの中央に配置 */
-#melody-gen-button-mobile {
+#melody-gen-button {
     justify-self: center;
 }
-#share-button-mobile {
+#share-button {
     justify-self: center;
 }
 
@@ -361,39 +343,6 @@ button:disabled {
     width: 36px;
     height: 36px;
     opacity: 1;
-}
-
-
-/* 既存の .footer-menu .footer-button-gen, .footer-menu .play-stop-button, .footer-menu .footer-spacer を削除 */
-/* 既存の @media (min-width: 481px) は変更なし */
-
-/* ▲▲▲ ここまで ▲▲▲ */
-
-@media (min-width: 481px) {
-    body {
-        padding-bottom: 0;
-    }
-
-    .container {
-        padding-bottom: 16px; /* Add some padding at the end of the page */
-    }
-
-    .footer-menu {
-        display: none;
-    }
-
-    .desktop-actions {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        margin-top: 24px;
-    }
-
-    .desktop-actions [id="melody-gen-button-desktop"] {
-        width: 100%;
-        max-width: 250px;
-    }
 }
 
 

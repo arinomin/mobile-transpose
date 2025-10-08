@@ -13,14 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetBtn = document.getElementById('reset-button');
     const selectorTicks = document.querySelector('.selector-ticks');
 
-    // Action Buttons (Desktop & Mobile)
-    const playStopBtnDesktop = document.getElementById('play-stop-button-desktop');
-    const playStopBtnMobile = document.getElementById('play-stop-button-mobile');
-    const melodyGenBtnDesktop = document.getElementById('melody-gen-button-desktop');
-    const melodyGenBtnMobile = document.getElementById('melody-gen-button-mobile');
-    const shareBtnDesktop = document.getElementById('share-button-desktop');
-    const shareBtnMobile = document.getElementById('share-button-mobile');
-    const allPlayStopButtons = [playStopBtnDesktop, playStopBtnMobile];
+    // Action Buttons
+    const playStopBtn = document.getElementById('play-stop-button');
+    const melodyGenBtn = document.getElementById('melody-gen-button');
+    const shareBtn = document.getElementById('share-button');
 
     // Modal Elements
     const bpmRateModal = document.getElementById('bpm-rate-modal');
@@ -163,9 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- Unified Sequencer Logic ---
     function updatePlayButtons(playing) {
-        allPlayStopButtons.forEach(btn => {
-            if (btn) btn.classList.toggle('playing', playing);
-        });
+        if (playStopBtn) playStopBtn.classList.toggle('playing', playing);
     }
 
     function nextNote() {
@@ -505,10 +499,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    allPlayStopButtons.forEach(btn => btn.addEventListener('click', handlePlayStop));
-
-    melodyGenBtnDesktop.addEventListener('click', openMelodyGenModal);
-    melodyGenBtnMobile.addEventListener('click', openMelodyGenModal);
+    playStopBtn.addEventListener('click', handlePlayStop);
+    melodyGenBtn.addEventListener('click', openMelodyGenModal);
 
     // Step Modal
     stepModal.addEventListener('click', (e) => { if (e.target === stepModal) closeStepModal(); });
@@ -767,8 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Event Listeners for Share/Load ---
-    shareBtnDesktop.addEventListener('click', handleShare);
-    shareBtnMobile.addEventListener('click', handleShare);
+    shareBtn.addEventListener('click', handleShare);
 
     // Load state from URL when the page loads
     loadStateFromHash();
