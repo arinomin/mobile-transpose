@@ -667,21 +667,25 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAllStepsUI();
     updatePlayButtons(false); // Set initial state
 
-    // --- Share & Load from URL ---
-    const SHARE_FORMAT_VERSION = 'v1';
+    // --- Share & Load from URL (v2) ---
+    const SHARE_FORMAT_VERSION = 'v2';
+    const RATES = [4, 3, 2, 1.5, 1, 0.5, 0.25]; // For indexing
 
     function serializeState() {
-        const stepTransposes = state.steps.map(s => s.transpose).join(',');
+        const rateIndex = RATES.indexOf(state.rate);
+        const noteIndex = NOTE_NAMES.indexOf(state.baseNote);
+        const stepStr = state.steps.map(s => (s.transpose + 12).toString(36)).join('');
+
         const data = [
             SHARE_FORMAT_VERSION,
-            state.bpm,
-            state.rate,
-            state.baseNote,
+            state.bpm.toString(36),
+            rateIndex,
+            noteIndex.toString(36),
             state.baseOctave,
-            state.seqMax,
-            stepTransposes
+            state.seqMax.toString(36),
+            stepStr
         ];
-        return data.join(';');
+        return data.join('-');
     }
 
     function handleShare() {
@@ -701,22 +705,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const dataString = decodeURIComponent(window.location.hash.substring(1));
-            const parts = dataString.split(';');
+            const parts = dataString.split('-');
+            const version = parts[0];
 
-            if (parts[0] !== SHARE_FORMAT_VERSION) {
-                console.warn('URLのデータ形式が異なります。');
+            if (version !== SHARE_FORMAT_VERSION) {
+                // You could potentially handle old versions here if needed
+                console.warn(`URL data version (${version}) does not match current version (${SHARE_FORMAT_VERSION}).`);
                 return;
             }
 
-            const [version, bpm, rate, baseNote, baseOctave, seqMax, stepTransposes] = parts;
+            const [_, bpm, rateIndex, noteIndex, baseOctave, seqMax, stepStr] = parts;
 
             // --- Restore State ---
-            state.bpm = parseInt(bpm, 10);
-            state.rate = parseFloat(rate);
-            state.baseNote = baseNote;
+            state.bpm = parseInt(bpm, 36);
+            state.rate = RATES[parseInt(rateIndex, 10)];
+            state.baseNote = NOTE_NAMES[parseInt(noteIndex, 36)];
             state.baseOctave = parseInt(baseOctave, 10);
-            state.seqMax = parseInt(seqMax, 10);
-            const transposes = stepTransposes.split(',').map(t => parseInt(t, 10));
+            state.seqMax = parseInt(seqMax, 36);
+            
+            const transposes = [...stepStr].map(char => parseInt(char, 36) - 12);
             for (let i = 0; i < state.steps.length; i++) {
                 if (transposes[i] !== undefined) {
                     state.steps[i].transpose = transposes[i];
