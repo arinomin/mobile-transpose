@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         baseNote: 'C',
         baseOctave: 4,
         seqMax: STEPS_COUNT,
+        pendingSeqMax: null, // For seamless seqMax change
         steps: Array(STEPS_COUNT).fill(0).map(() => ({ transpose: 0 })),
         currentStep: 0,
         isPlaying: false, // Covers both main and preview playback
@@ -168,7 +169,16 @@ document.addEventListener('DOMContentLoaded', () => {
         state.nextNoteTime += (noteDurationInBeats * secondsPerBeat) / 4;
         
         const loop = state.playbackMode === 'main';
-        const sequenceLength = state.seqMax;
+        let sequenceLength = state.seqMax;
+
+        if (loop && state.currentStep === sequenceLength - 1) {
+            if (state.pendingSeqMax !== null) {
+                state.seqMax = state.pendingSeqMax;
+                state.pendingSeqMax = null;
+                sequenceLength = state.seqMax;
+                requestAnimationFrame(updateDisabledStepsUI);
+            }
+        }
 
         if (loop) {
             state.currentStep = (state.currentStep + 1) % sequenceLength;
@@ -182,6 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const sequence = isPreview ? state.previewSteps : state.steps;
         if (!sequence) return;
 
+        if (stepNumber >= state.seqMax && state.playbackMode === 'main') return;
+
         state.notesInQueue.push({ note: stepNumber, time: time, isPreview: isPreview });
 
         const stepData = sequence[stepNumber];
@@ -193,11 +205,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function scheduler() {
-        const sequenceLength = state.seqMax;
         const loop = state.playbackMode === 'main';
+        const currentSequenceLength = state.seqMax;
 
         while (state.nextNoteTime < state.audioContext.currentTime + state.scheduleAheadTime) {
-            if (!loop && state.currentStep >= sequenceLength) {
+            if (!loop && state.currentStep >= currentSequenceLength) {
                 stopPlayback();
                 break;
             }
@@ -224,9 +236,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 lastStepEl.classList.remove('active', 'active-preview');
             }
 
-            const newStepEl = sequencerGrid.children[drawStepInfo.note];
-            if (newStepEl) {
-                newStepEl.classList.add(drawStepInfo.isPreview ? 'active-preview' : 'active');
+            if (drawStepInfo.note < state.seqMax || drawStepInfo.isPreview) {
+                const newStepEl = sequencerGrid.children[drawStepInfo.note];
+                if (newStepEl) {
+                    newStepEl.classList.add(drawStepInfo.isPreview ? 'active-preview' : 'active');
+                }
             }
             state.lastStepDrawn = drawStepInfo.note;
         }
@@ -266,6 +280,12 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(state.schedulerTimerId);
         state.schedulerTimerId = null;
         
+        if (state.pendingSeqMax !== null) {
+            state.seqMax = state.pendingSeqMax;
+            state.pendingSeqMax = null;
+            updateDisabledStepsUI();
+        }
+
         state.notesInQueue = [];
         const activeStepEl = sequencerGrid.querySelector('.active, .active-preview');
         if (activeStepEl) {
@@ -306,10 +326,22 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < STEPS_COUNT; i++) {
             updateStepUI(i, sequence[i]);
         }
+        updateDisabledStepsUI();
+    }
+
+    function updateDisabledStepsUI() {
+        const steps = sequencerGrid.children;
+        const limit = state.pendingSeqMax !== null ? state.pendingSeqMax : state.seqMax;
+        for (let i = 0; i < steps.length; i++) {
+            steps[i].classList.toggle('disabled', i >= limit);
+        }
     }
 
     // --- Step Modal Logic ---
     function openStepModal(stepIndex) {
+        const limit = state.pendingSeqMax !== null ? state.pendingSeqMax : state.seqMax;
+        if (stepIndex >= limit) return;
+
         if (state.isPlaying) stopPlayback();
         state.editedStepIndex = stepIndex;
         modalStepNumber.textContent = `#${stepIndex + 1}`;
@@ -317,7 +349,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStepModalInfo(transpose);
         stepModal.style.display = 'flex';
 
-        // Add drag listeners only when modal is open
         document.addEventListener('mousemove', onDrag);
         document.addEventListener('mouseup', endDrag);
         document.addEventListener('touchmove', onDrag, { passive: false });
@@ -327,7 +358,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeStepModal() {
         stepModal.style.display = 'none';
 
-        // Clean up drag listeners
         isDragging = false;
         document.removeEventListener('mousemove', onDrag);
         document.removeEventListener('mouseup', endDrag);
@@ -357,7 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const offsetX = clientX - selectorRect.left;
         const percentage = Math.max(0, Math.min(1, offsetX / selectorRect.width));
         let transpose = Math.round(percentage * 24) - 12;
-        updateStepModalInfo(transpose, true); // Auto-save
+        updateStepModalInfo(transpose, true);
     }
 
     // --- BPM/Rate Modal Logic ---
@@ -433,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeMelodyGenModal() {
         if (state.isPlaying) stopPlayback();
         state.previewSteps = null;
-        updateAllStepsUI(); // Restore main sequence view
+        updateAllStepsUI();
         melodyGenModal.style.display = 'none';
     }
 
@@ -463,7 +493,6 @@ document.addEventListener('DOMContentLoaded', () => {
             newMelody.push({ transpose: uniqueTransposes[currentIndex] });
             const randomChoice = Math.random();
             if (randomChoice < 0.2) {
-                // Stay
             } else if (randomChoice < 0.6) {
                 currentIndex = Math.min(uniqueTransposes.length - 1, currentIndex + 1);
             } else {
@@ -474,7 +503,6 @@ document.addEventListener('DOMContentLoaded', () => {
         state.previewSteps = newMelody;
         applyMelodyButton.disabled = false;
         
-        // Update UI to show preview melody
         for (let i = 0; i < STEPS_COUNT; i++) {
             updateStepUI(i, state.previewSteps[i]);
         }
@@ -484,7 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function applyMelody() {
         if (state.previewSteps) {
-            state.steps = JSON.parse(JSON.stringify(state.previewSteps)); // Deep copy
+            state.steps = JSON.parse(JSON.stringify(state.previewSteps));
             updateAllStepsUI();
             closeMelodyGenModal();
         }
@@ -502,7 +530,6 @@ document.addEventListener('DOMContentLoaded', () => {
     playStopBtn.addEventListener('click', handlePlayStop);
     melodyGenBtn.addEventListener('click', openMelodyGenModal);
 
-    // Step Modal
     stepModal.addEventListener('click', (e) => { if (e.target === stepModal) closeStepModal(); });
     closeModalBtn.addEventListener('click', closeStepModal);
     resetBtn.addEventListener('click', () => updateStepModalInfo(0, true));
@@ -515,7 +542,6 @@ document.addEventListener('DOMContentLoaded', () => {
         playAuditionSound(finalMidi);
     });
 
-    // BPM/Rate Modal
     bpmRateDisplayButton.addEventListener('click', openBpmRateModal);
     closeBpmRateModalButton.addEventListener('click', closeBpmRateModal);
     doneBpmRateButton.addEventListener('click', applyBpmRateChanges);
@@ -535,7 +561,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Base Note Modal
     baseNoteDisplayButton.addEventListener('click', openBaseNoteModal);
     closeBaseNoteModalButton.addEventListener('click', closeBaseNoteModal);
     doneBaseNoteButton.addEventListener('click', applyBaseNoteChanges);
@@ -557,14 +582,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Melody Gen Modal
     closeMelodyGenModalButton.addEventListener('click', closeMelodyGenModal);
     melodyGenModal.addEventListener('click', (e) => { if (e.target === melodyGenModal) closeMelodyGenModal(); });
     previewMelodyButton.addEventListener('click', generateAndPreviewMelody);
     applyMelodyButton.addEventListener('click', applyMelody);
 
-
-    // Transpose Selector Drag Logic
     let isDragging = false;
     const startDrag = (e) => { isDragging = true; handleSelectorInteraction(e); };
     const onDrag = (e) => { if (isDragging) { e.preventDefault(); handleSelectorInteraction(e); } };
@@ -583,6 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const stepElement = document.createElement('div');
             stepElement.classList.add('step');
             stepElement.dataset.index = i;
+            stepElement.draggable = true;
             const stepNumberEl = document.createElement('div');
             stepNumberEl.classList.add('step-number');
             stepNumberEl.textContent = i + 1;
@@ -597,6 +620,59 @@ document.addEventListener('DOMContentLoaded', () => {
             sequencerGrid.appendChild(stepElement);
         }
     }
+
+    let dragSrcIndex = null;
+
+    function handleDragStart(e) {
+        if (e.target.classList.contains('step')) {
+            dragSrcIndex = parseInt(e.target.dataset.index, 10);
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.innerHTML);
+            e.target.classList.add('dragging');
+        }
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        const target = e.target.closest('.step');
+        if (target) {
+            target.classList.add('drag-over');
+        }
+        return false;
+    }
+
+    function handleDragLeave(e) {
+        const target = e.target.closest('.step');
+        if (target) {
+            target.classList.remove('drag-over');
+        }
+    }
+
+    function handleDrop(e) {
+        e.stopPropagation();
+        const dropTarget = e.target.closest('.step');
+        if (dropTarget) {
+            dropTarget.classList.remove('drag-over');
+            const dropIndex = parseInt(dropTarget.dataset.index, 10);
+
+            if (dragSrcIndex !== null && dragSrcIndex !== dropIndex) {
+                const temp = state.steps[dragSrcIndex];
+                state.steps[dragSrcIndex] = state.steps[dropIndex];
+                state.steps[dropIndex] = temp;
+
+                updateAllStepsUI();
+            }
+        }
+        return false;
+    }
+
+    function handleDragEnd(e) {
+        e.target.classList.remove('dragging');
+        const allSteps = sequencerGrid.querySelectorAll('.step');
+        allSteps.forEach(step => step.classList.remove('drag-over'));
+        dragSrcIndex = null;
+    }
+
 
     function createSelectorTicks() {
         selectorTicks.innerHTML = '';
@@ -618,11 +694,24 @@ document.addEventListener('DOMContentLoaded', () => {
             button.dataset.value = i;
             if (i === state.seqMax) button.classList.add('active');
             button.addEventListener('click', () => {
-                if (state.isPlaying) stopPlayback();
-                state.seqMax = i;
+                const newSeqMax = i;
+                const oldSeqMax = state.seqMax;
+
                 const currentActive = seqMaxButtonsContainer.querySelector('.active');
                 if (currentActive) currentActive.classList.remove('active');
                 button.classList.add('active');
+
+                if (state.isPlaying) {
+                    if (newSeqMax < oldSeqMax && state.currentStep < newSeqMax) {
+                        state.seqMax = newSeqMax;
+                        state.pendingSeqMax = null;
+                    } else {
+                        state.pendingSeqMax = newSeqMax;
+                    }
+                } else {
+                    state.seqMax = newSeqMax;
+                }
+                updateDisabledStepsUI();
             });
             seqMaxButtonsContainer.appendChild(button);
         }
@@ -657,11 +746,16 @@ document.addEventListener('DOMContentLoaded', () => {
     createModalNoteButtons();
     createModalOctaveButtons();
     updateAllStepsUI();
-    updatePlayButtons(false); // Set initial state
+    updatePlayButtons(false);
 
-    // --- Share & Load from URL (v3) ---
+    sequencerGrid.addEventListener('dragstart', handleDragStart, false);
+    sequencerGrid.addEventListener('dragover', handleDragOver, false);
+    sequencerGrid.addEventListener('dragleave', handleDragLeave, false);
+    sequencerGrid.addEventListener('drop', handleDrop, false);
+    sequencerGrid.addEventListener('dragend', handleDragEnd, false);
+
     const SHARE_FORMAT_VERSION = 'v3';
-    const RATES = [4, 3, 2, 1.5, 1, 0.5, 0.25]; // For indexing
+    const RATES = [4, 3, 2, 1.5, 1, 0.5, 0.25];
 
     function serializeState() {
         const rateIndex = RATES.indexOf(state.rate);
@@ -701,11 +795,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const version = dataString.substring(0, 2);
             if (version !== SHARE_FORMAT_VERSION) {
                 console.warn(`URL data version (${version}) does not match current version (${SHARE_FORMAT_VERSION}).`);
-                // ここで古いバージョン(v2, v1)のデコード処理を呼び出すことも可能
                 return;
             }
 
-            // --- Parse Fixed-Length String ---
             let pos = 2;
             const bpm = dataString.substring(pos, pos += 2);
             const rateIndex = dataString.substring(pos, pos += 1);
@@ -714,7 +806,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const seqMax = dataString.substring(pos, pos += 1);
             const stepStr = dataString.substring(pos);
 
-            // --- Restore State ---
             state.bpm = parseInt(bpm, 36);
             state.rate = RATES[parseInt(rateIndex, 10)];
             state.baseNote = NOTE_NAMES[parseInt(noteIndex, 36)];
@@ -728,26 +819,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // --- Update UI from restored state ---
-            // BPM / Rate
             state.modalBpm = state.bpm;
             state.modalRate = state.rate;
             const rateButton = modalRateButtons.querySelector(`button[data-rate="${state.rate}"]`);
             state.modalRateText = rateButton ? rateButton.textContent : '?';
             bpmRateDisplayButton.textContent = `${state.bpm} / ${state.modalRateText}`;
 
-            // Base Note
             state.modalBaseNote = state.baseNote;
             state.modalBaseOctave = state.baseOctave;
             baseNoteDisplayButton.textContent = `${state.baseNote}${state.baseOctave}`;
 
-            // SEQ MAX
             const currentActive = seqMaxButtonsContainer.querySelector('.active');
             if (currentActive) currentActive.classList.remove('active');
             const newActive = seqMaxButtonsContainer.querySelector(`button[data-value="${state.seqMax}"]`);
             if (newActive) newActive.classList.add('active');
+            updateDisabledStepsUI();
 
-            // Sequencer Grid
             updateAllStepsUI();
 
             alert('URLからシーケンスを復元しました。');
@@ -758,9 +845,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Event Listeners for Share/Load ---
     shareBtn.addEventListener('click', handleShare);
 
-    // Load state from URL when the page loads
     loadStateFromHash();
 });

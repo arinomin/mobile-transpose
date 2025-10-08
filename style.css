@@ -119,33 +119,33 @@ button:disabled {
 .sequencer-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(4, 1fr); /* Add this to ensure square cells */
+    grid-template-rows: repeat(4, 1fr);
     gap: 8px;
     background-color: var(--secondary-bg);
     padding: 16px;
     border-radius: 12px;
-    margin: 24px auto; /* Center the grid and provide vertical spacing */
-    width: 100%; /* Make it responsive to the container's padding */
-    max-width: 500px; /* Prevent it from becoming too large on desktops */
-    aspect-ratio: 1 / 1; /* Enforce a square aspect ratio for the whole grid */
+    margin: 24px auto;
+    width: 100%;
+    max-width: 500px;
+    aspect-ratio: 1 / 1;
 }
 
 .step {
     background-color: var(--tertiary-bg);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    aspect-ratio: 1 / 1; /* This is now slightly redundant but safe to keep */
+    aspect-ratio: 1 / 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
+    transition: background-color 0.2s, transform 0.1s, opacity 0.2s;
     position: relative;
-    padding: 4px; /* Reduce padding slightly for smaller text */
-    overflow: hidden; /* Prevent content from spilling out */
-    min-width: 0; /* Fix for flex/grid sizing issues */
-    min-height: 0; /* Fix for flex/grid sizing issues */
+    padding: 4px;
+    overflow: hidden;
+    min-width: 0;
+    min-height: 0;
 }
 
 .step.active {
@@ -163,21 +163,36 @@ button:disabled {
     transform: scale(1.05);
 }
 
+.step.dragging {
+    opacity: 0.4;
+}
+
+.step.drag-over {
+    border-style: dashed;
+    border-color: var(--accent-color);
+}
+
+.step.disabled {
+    opacity: 0.3;
+    cursor: default;
+    background-color: var(--primary-bg);
+}
+
 .step-number {
     position: absolute;
-    top: 4px; /* Adjust for new padding */
-    left: 4px; /* Adjust for new padding */
-    font-size: 0.7em; /* Slightly smaller */
+    top: 4px;
+    left: 4px;
+    font-size: 0.7em;
     opacity: 0.5;
 }
 
 .step-transpose {
-    font-size: 1.6em; /* Adjust to fit smaller cells */
+    font-size: 1.6em;
     font-weight: bold;
 }
 
 .step-note {
-    font-size: 0.9em; /* Adjust to fit smaller cells */
+    font-size: 0.9em;
     opacity: 0.8;
 }
 
@@ -186,8 +201,8 @@ button:disabled {
     background-color: var(--secondary-bg);
     padding: 16px;
     border-radius: 12px;
-    margin: 24px auto; /* Center it to match the sequencer grid */
-    max-width: 500px; /* Match the sequencer grid max-width */
+    margin: 24px auto;
+    max-width: 500px;
     text-align: center;
 }
 
@@ -222,74 +237,30 @@ button:disabled {
     font-weight: bold;
 }
 
-/* --- Action Buttons --- */
-.play-stop-button {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    padding: 0;
-    background-color: rgba(var(--play-color-rgb), 0.15);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 2px solid var(--play-color);
-    box-shadow: 0 0 12px -2px var(--play-color);
-}
-
-.play-stop-button svg {
-    fill: white;
-    width: 32px;
-    height: 32px;
-}
-
-.play-stop-button .icon-stop {
-    display: none;
-}
-
-.play-stop-button.playing {
-    background-color: rgba(var(--stop-color-rgb), 0.15);
-    border-color: var(--stop-color);
-    box-shadow: 0 0 12px -2px var(--stop-color);
-}
-
-.play-stop-button.playing .icon-play {
-    display: none;
-}
-
-.play-stop-button.playing .icon-stop {
-    display: block;
-}
-
-/* ▼▼▼ ここからフッターメニューのスタイルを変更・追記 ▼▼▼ */
-
+/* --- Footer & Action Buttons --- */
 .footer-menu {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     height: var(--footer-height);
-    /* 背景を半透明のグラデーションに変更 */
     background: linear-gradient(180deg, rgba(50, 50, 50, 0.7), rgba(30, 30, 30, 0.8));
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    /* 境界線をより繊細に */
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    /* 内側にうっすらと光るシャドウを追加して立体感を出す */
     box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr; /* 3つのボタンを均等に配置 */
+    grid-template-columns: 1fr auto 1fr; /* Center column auto-sized */
     align-items: center;
+    justify-items: center;
     padding: 0 16px;
     gap: 16px;
     z-index: 500;
 }
 
-/* フッターのボタン共通スタイル */
 .footer-button {
-    background: transparent;
-    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text-color);
     border-radius: 50%;
     width: 56px;
@@ -299,50 +270,63 @@ button:disabled {
     align-items: center;
     padding: 0;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
+    transition: all 0.2s ease-in-out;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.footer-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 4px 8px rgba(0,0,0,0.3);
 }
 
 .footer-button:active {
-    background-color: rgba(255, 255, 255, 0.1);
-    transform: scale(0.95);
+    background-color: rgba(255, 255, 255, 0.08);
+    transform: scale(0.96);
+    box-shadow: inset 0 2px 2px rgba(0,0,0,0.1);
 }
 
 .footer-button svg {
     fill: var(--text-color);
-    opacity: 0.8;
+    opacity: 0.9;
     width: 28px;
     height: 28px;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4));
 }
 
-/* 各ボタンをグリッドの中央に配置 */
-#melody-gen-button {
-    justify-self: center;
-}
-#share-button {
-    justify-self: center;
-}
+#melody-gen-button { justify-self: start; }
+#share-button { justify-self: end; }
 
-/* 中央の再生ボタンを大きく、目立たせる */
-.footer-menu .play-stop-button {
+.play-stop-button {
     grid-column: 2;
-    justify-self: center;
     width: 72px;
     height: 72px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     background-color: rgba(var(--play-color-rgb), 0.2);
     border: 2px solid var(--play-color);
     box-shadow: 0 0 15px -2px var(--play-color);
 }
 
-.footer-menu .play-stop-button.playing {
+.play-stop-button.playing {
     background-color: rgba(var(--stop-color-rgb), 0.2);
     border-color: var(--stop-color);
     box-shadow: 0 0 15px -2px var(--stop-color);
 }
 
-.footer-menu .play-stop-button svg {
+.play-stop-button .icon-stop { display: none; }
+.play-stop-button.playing .icon-play { display: none; }
+.play-stop-button.playing .icon-stop { display: block; }
+
+.play-stop-button svg {
     width: 36px;
     height: 36px;
     opacity: 1;
+    filter: none; /* Main button icon doesn't need extra shadow */
 }
 
 
