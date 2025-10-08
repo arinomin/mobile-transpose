@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const playStopBtnMobile = document.getElementById('play-stop-button-mobile');
     const melodyGenBtnDesktop = document.getElementById('melody-gen-button-desktop');
     const melodyGenBtnMobile = document.getElementById('melody-gen-button-mobile');
+    const shareBtnDesktop = document.getElementById('share-button-desktop');
+    const shareBtnMobile = document.getElementById('share-button-mobile');
     const allPlayStopButtons = [playStopBtnDesktop, playStopBtnMobile];
 
     // Modal Elements
@@ -664,4 +666,97 @@ document.addEventListener('DOMContentLoaded', () => {
     createModalOctaveButtons();
     updateAllStepsUI();
     updatePlayButtons(false); // Set initial state
+
+    // --- Share & Load from URL ---
+    const SHARE_FORMAT_VERSION = 'v1';
+
+    function serializeState() {
+        const stepTransposes = state.steps.map(s => s.transpose).join(',');
+        const data = [
+            SHARE_FORMAT_VERSION,
+            state.bpm,
+            state.rate,
+            state.baseNote,
+            state.baseOctave,
+            state.seqMax,
+            stepTransposes
+        ];
+        return data.join(';');
+    }
+
+    function handleShare() {
+        const dataString = serializeState();
+        const url = new URL(window.location.href);
+        url.hash = encodeURIComponent(dataString);
+
+        navigator.clipboard.writeText(url.toString()).then(() => {
+            alert('共有URLをクリップボードにコピーしました！');
+        }, () => {
+            alert('クリップボードへのコピーに失敗しました。手動でURLをコピーしてください。');
+        });
+    }
+
+    function loadStateFromHash() {
+        if (!window.location.hash) return;
+
+        try {
+            const dataString = decodeURIComponent(window.location.hash.substring(1));
+            const parts = dataString.split(';');
+
+            if (parts[0] !== SHARE_FORMAT_VERSION) {
+                console.warn('URLのデータ形式が異なります。');
+                return;
+            }
+
+            const [version, bpm, rate, baseNote, baseOctave, seqMax, stepTransposes] = parts;
+
+            // --- Restore State ---
+            state.bpm = parseInt(bpm, 10);
+            state.rate = parseFloat(rate);
+            state.baseNote = baseNote;
+            state.baseOctave = parseInt(baseOctave, 10);
+            state.seqMax = parseInt(seqMax, 10);
+            const transposes = stepTransposes.split(',').map(t => parseInt(t, 10));
+            for (let i = 0; i < state.steps.length; i++) {
+                if (transposes[i] !== undefined) {
+                    state.steps[i].transpose = transposes[i];
+                }
+            }
+
+            // --- Update UI from restored state ---
+            // BPM / Rate
+            state.modalBpm = state.bpm;
+            state.modalRate = state.rate;
+            const rateButton = modalRateButtons.querySelector(`button[data-rate="${state.rate}"]`);
+            state.modalRateText = rateButton ? rateButton.textContent : '?';
+            bpmRateDisplayButton.textContent = `${state.bpm} / ${state.modalRateText}`;
+
+            // Base Note
+            state.modalBaseNote = state.baseNote;
+            state.modalBaseOctave = state.baseOctave;
+            baseNoteDisplayButton.textContent = `${state.baseNote}${state.baseOctave}`;
+
+            // SEQ MAX
+            const currentActive = seqMaxButtonsContainer.querySelector('.active');
+            if (currentActive) currentActive.classList.remove('active');
+            const newActive = seqMaxButtonsContainer.querySelector(`button[data-value="${state.seqMax}"]`);
+            if (newActive) newActive.classList.add('active');
+
+            // Sequencer Grid
+            updateAllStepsUI();
+
+            alert('URLからシーケンスを復元しました。');
+
+        } catch (e) {
+            console.error('URLからの状態復元に失敗しました:', e);
+            alert('URLデータの読み込みに失敗しました。');
+        }
+    }
+
+    // --- Event Listeners for Share/Load ---
+    shareBtnDesktop.addEventListener('click', handleShare);
+    shareBtnMobile.addEventListener('click', handleShare);
+
+    // Load state from URL when the page loads
+    loadStateFromHash();
 });
