@@ -65,48 +65,48 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- State ---
-    let audioContext;
-    let masterGainNode;
-    let bpm = 120;
-    let rate = 4;
-    let baseNote = 'C';
-    let baseOctave = 4;
-    let seqMax = STEPS_COUNT;
-    let steps = Array(STEPS_COUNT).fill(0).map(() => ({ transpose: 0 }));
-    let currentStep = 0;
-    let isPlaying = false;
-    let editedStepIndex = null;
+    const state = {
+        audioContext: null,
+        masterGainNode: null,
+        bpm: 120,
+        rate: 4,
+        baseNote: 'C',
+        baseOctave: 4,
+        seqMax: STEPS_COUNT,
+        steps: Array(STEPS_COUNT).fill(0).map(() => ({ transpose: 0 })),
+        currentStep: 0,
+        isPlaying: false, // Covers both main and preview playback
+        playbackMode: 'main', // 'main' or 'preview'
+        editedStepIndex: null,
+        
+        // Scheduler State
+        nextNoteTime: 0.0,
+        scheduleAheadTime: 0.1, // How far ahead to schedule audio (sec)
+        schedulerLookahead: 25.0, // How often to call scheduler function (ms)
+        schedulerTimerId: null,
+        lastStepDrawn: -1,
+        notesInQueue: [],
 
-    // --- New Scheduler State ---
-    let nextNoteTime = 0.0;
-    let scheduleAheadTime = 0.1; // How far ahead to schedule audio (sec)
-    let schedulerLookahead = 25.0; // How often to call scheduler function (ms)
-    let schedulerTimerId = null;
-    let lastStepDrawn = -1;
-    let notesInQueue = [];
+        // Temporary modal states
+        modalBpm: 120,
+        modalRate: 4,
+        modalRateText: '16分',
+        modalBaseNote: 'C',
+        modalBaseOctave: 4,
 
-    // Temporary modal states
-    let modalBpm = bpm;
-    let modalRate = rate;
-    let modalRateText = '16分';
-    let modalBaseNote = baseNote;
-    let modalBaseOctave = baseOctave;
-    
-    // Melody Generation State
-    let previewSteps = null;
-    let isPreviewPlaying = false;
-    let previewTimerId = null;
-    let currentPreviewOscillator = null;
+        // Melody Generation State
+        previewSteps: null,
+    };
 
 
     // --- Web Audio API Initialization ---
     function initAudio() {
-        if (audioContext) return;
+        if (state.audioContext) return;
         try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            masterGainNode = audioContext.createGain();
-            masterGainNode.connect(audioContext.destination);
-            masterGainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
+            state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            state.masterGainNode = state.audioContext.createGain();
+            state.masterGainNode.connect(state.audioContext.destination);
+            state.masterGainNode.gain.setValueAtTime(1.0, state.audioContext.currentTime);
         } catch (e) {
             alert('Web Audio API is not supported in this browser.');
         }
@@ -128,22 +128,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return NOTE_NAMES[noteIndex] + octave;
     }
 
-    // --- Sound Playback (Refactored for proper scheduling and no clicks) ---
+    // --- Sound Playback ---
     function playNote(midiNote, startTime, duration) {
-        if (!audioContext) return;
+        if (!state.audioContext) return;
         
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        const oscillator = state.audioContext.createOscillator();
+        const gainNode = state.audioContext.createGain();
         
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(midiToFreq(midiNote), startTime);
 
-        // --- Gain envelope to prevent clicks ---
         const attackTime = 0.01;
         const releaseTime = 0.05;
         const sustainLevel = 0.4;
 
-        gainNode.connect(masterGainNode);
+        gainNode.connect(state.masterGainNode);
         gainNode.gain.setValueAtTime(0, startTime);
         gainNode.gain.linearRampToValueAtTime(sustainLevel, startTime + attackTime);
         gainNode.gain.setValueAtTime(sustainLevel, startTime + duration - releaseTime);
@@ -156,11 +155,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function playAuditionSound(midiNote, duration = 0.4) {
         initAudio();
-        const now = audioContext.currentTime;
+        const now = state.audioContext.currentTime;
         playNote(midiNote, now, duration);
     }
     
-    // --- Sequencer Logic (New Scheduler) ---
+    // --- Unified Sequencer Logic ---
     function updatePlayButtons(playing) {
         allPlayStopButtons.forEach(btn => {
             if (btn) btn.classList.toggle('playing', playing);
@@ -168,92 +167,129 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function nextNote() {
-        const secondsPerBeat = 60.0 / bpm;
-        const noteDurationInBeats = 4.0 / rate;
-        nextNoteTime += (noteDurationInBeats * secondsPerBeat) / 4; // Assuming 16th notes are the base for rate=4
+        const secondsPerBeat = 60.0 / state.bpm;
+        const noteDurationInBeats = 4.0 / state.rate;
+        state.nextNoteTime += (noteDurationInBeats * secondsPerBeat) / 4;
         
-        currentStep = (currentStep + 1) % seqMax;
+        const loop = state.playbackMode === 'main';
+        const sequenceLength = state.seqMax;
+
+        if (loop) {
+            state.currentStep = (state.currentStep + 1) % sequenceLength;
+        } else {
+            state.currentStep++;
+        }
     }
 
     function scheduleNote(stepNumber, time) {
-        notesInQueue.push({ note: stepNumber, time: time });
+        const isPreview = state.playbackMode === 'preview';
+        const sequence = isPreview ? state.previewSteps : state.steps;
+        if (!sequence) return;
 
-        const stepData = steps[stepNumber];
-        const baseMidi = noteToMidi(baseNote, baseOctave);
+        state.notesInQueue.push({ note: stepNumber, time: time, isPreview: isPreview });
+
+        const stepData = sequence[stepNumber];
+        const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
         const finalMidi = baseMidi + stepData.transpose;
-        const noteDuration = (60.0 / bpm) / rate;
+        const noteDuration = (60.0 / state.bpm) / state.rate;
 
         playNote(finalMidi, time, noteDuration);
     }
 
     function scheduler() {
-        while (nextNoteTime < audioContext.currentTime + scheduleAheadTime) {
-            scheduleNote(currentStep, nextNoteTime);
+        const sequenceLength = state.seqMax;
+        const loop = state.playbackMode === 'main';
+
+        while (state.nextNoteTime < state.audioContext.currentTime + state.scheduleAheadTime) {
+            if (!loop && state.currentStep >= sequenceLength) {
+                stopPlayback();
+                break;
+            }
+            scheduleNote(state.currentStep, state.nextNoteTime);
             nextNote();
         }
-        schedulerTimerId = setTimeout(scheduler, schedulerLookahead);
+        
+        if (state.isPlaying) {
+            state.schedulerTimerId = setTimeout(scheduler, state.schedulerLookahead);
+        }
     }
 
     function draw() {
-        let drawStep = lastStepDrawn;
-        const currentTime = audioContext.currentTime;
+        let drawStepInfo = null;
+        const currentTime = state.audioContext.currentTime;
 
-        while (notesInQueue.length && notesInQueue[0].time < currentTime) {
-            drawStep = notesInQueue[0].note;
-            notesInQueue.shift();
+        while (state.notesInQueue.length && state.notesInQueue[0].time < currentTime) {
+            drawStepInfo = state.notesInQueue.shift();
         }
 
-        if (lastStepDrawn !== drawStep) {
-            if (lastStepDrawn !== -1) {
-                sequencerGrid.children[lastStepDrawn].classList.remove('active');
+        if (drawStepInfo) {
+            const lastStepEl = sequencerGrid.querySelector('.active, .active-preview');
+            if (lastStepEl) {
+                lastStepEl.classList.remove('active', 'active-preview');
             }
-            lastStepDrawn = drawStep;
-            if (drawStep !== -1) {
-                sequencerGrid.children[drawStep].classList.add('active');
+
+            const newStepEl = sequencerGrid.children[drawStepInfo.note];
+            if (newStepEl) {
+                newStepEl.classList.add(drawStepInfo.isPreview ? 'active-preview' : 'active');
             }
+            state.lastStepDrawn = drawStepInfo.note;
         }
         
-        if (isPlaying) {
+        if (state.isPlaying) {
             requestAnimationFrame(draw);
         }
     }
 
-    function startPlayback() {
+    function startPlayback(mode = 'main', sequence = null) {
         initAudio();
-        if (isPlaying) return;
-        isPlaying = true;
+        if (state.isPlaying) stopPlayback();
+
+        state.playbackMode = mode;
+        state.isPlaying = true;
         
-        currentStep = 0;
-        nextNoteTime = audioContext.currentTime + 0.1; // Start with a small delay
-        scheduler(); // Start the scheduler loop
-        requestAnimationFrame(draw); // Start the drawing loop
-        
-        updatePlayButtons(true);
+        if (mode === 'preview') {
+            state.previewSteps = sequence;
+            previewMelodyButton.disabled = true;
+            applyMelodyButton.disabled = true;
+        } else {
+            updatePlayButtons(true);
+        }
+
+        state.currentStep = 0;
+        state.nextNoteTime = state.audioContext.currentTime + 0.1;
+        scheduler();
+        requestAnimationFrame(draw);
     }
 
     function stopPlayback() {
-        if (!isPlaying) return;
-        isPlaying = false;
-
-        clearTimeout(schedulerTimerId);
-        schedulerTimerId = null;
+        if (!state.isPlaying) return;
         
-        // Clear any future notes and visual feedback
-        notesInQueue = [];
-        if (lastStepDrawn !== -1) {
-            sequencerGrid.children[lastStepDrawn].classList.remove('active');
-            lastStepDrawn = -1;
+        const wasPreview = state.playbackMode === 'preview';
+        state.isPlaying = false;
+
+        clearTimeout(state.schedulerTimerId);
+        state.schedulerTimerId = null;
+        
+        state.notesInQueue = [];
+        const activeStepEl = sequencerGrid.querySelector('.active, .active-preview');
+        if (activeStepEl) {
+            activeStepEl.classList.remove('active', 'active-preview');
         }
+        state.lastStepDrawn = -1;
 
-        // Ramp down master gain to stop any currently playing/scheduled notes abruptly but smoothly
-        masterGainNode.gain.cancelScheduledValues(audioContext.currentTime);
-        masterGainNode.gain.setValueAtTime(masterGainNode.gain.value, audioContext.currentTime);
-        masterGainNode.gain.linearRampToValueAtTime(0.0, audioContext.currentTime + 0.05);
-        // Restore gain for next playback
-        masterGainNode.gain.linearRampToValueAtTime(1.0, audioContext.currentTime + 0.1);
+        state.masterGainNode.gain.cancelScheduledValues(state.audioContext.currentTime);
+        state.masterGainNode.gain.setValueAtTime(state.masterGainNode.gain.value, state.audioContext.currentTime);
+        state.masterGainNode.gain.linearRampToValueAtTime(0.0, state.audioContext.currentTime + 0.05);
+        state.masterGainNode.gain.linearRampToValueAtTime(1.0, state.audioContext.currentTime + 0.1);
 
-        currentStep = 0;
-        updatePlayButtons(false);
+        state.currentStep = 0;
+
+        if (wasPreview) {
+            previewMelodyButton.disabled = false;
+            applyMelodyButton.disabled = state.previewSteps === null;
+        } else {
+            updatePlayButtons(false);
+        }
     }
 
     // --- UI Update ---
@@ -264,34 +300,49 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateStepUI(index, stepData) {
         const stepElement = sequencerGrid.children[index];
         stepElement.querySelector('.step-transpose').textContent = formatTranspose(stepData.transpose);
-        const baseMidi = noteToMidi(baseNote, baseOctave);
+        const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
         const finalMidi = baseMidi + stepData.transpose;
         stepElement.querySelector('.step-note').textContent = getNoteName(finalMidi);
     }
 
     function updateAllStepsUI() {
+        const sequence = state.playbackMode === 'preview' && state.previewSteps ? state.previewSteps : state.steps;
         for (let i = 0; i < STEPS_COUNT; i++) {
-            updateStepUI(i, steps[i]);
+            updateStepUI(i, sequence[i]);
         }
     }
 
     // --- Step Modal Logic ---
     function openStepModal(stepIndex) {
-        editedStepIndex = stepIndex;
+        if (state.isPlaying) stopPlayback();
+        state.editedStepIndex = stepIndex;
         modalStepNumber.textContent = `#${stepIndex + 1}`;
-        const transpose = steps[stepIndex].transpose;
+        const transpose = state.steps[stepIndex].transpose;
         updateStepModalInfo(transpose);
         stepModal.style.display = 'flex';
+
+        // Add drag listeners only when modal is open
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchmove', onDrag, { passive: false });
+        document.addEventListener('touchend', endDrag);
     }
 
     function closeStepModal() {
         stepModal.style.display = 'none';
+
+        // Clean up drag listeners
+        isDragging = false;
+        document.removeEventListener('mousemove', onDrag);
+        document.removeEventListener('mouseup', endDrag);
+        document.removeEventListener('touchmove', onDrag);
+        document.removeEventListener('touchend', endDrag);
     }
 
     function updateStepModalInfo(transpose, save = false) {
         transposeValueDisplay.textContent = formatTranspose(transpose);
         intervalNameDisplay.textContent = INTERVAL_NAMES[transpose] || '';
-        const baseMidi = noteToMidi(baseNote, baseOctave);
+        const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
         const finalMidi = baseMidi + transpose;
         finalNoteDisplay.textContent = getNoteName(finalMidi);
         const handle = transposeSelector.querySelector('.selector-handle');
@@ -299,8 +350,8 @@ document.addEventListener('DOMContentLoaded', () => {
         handle.style.left = `${percentage * 100}%`;
 
         if (save) {
-            steps[editedStepIndex].transpose = transpose;
-            updateStepUI(editedStepIndex, steps[editedStepIndex]);
+            state.steps[state.editedStepIndex].transpose = transpose;
+            updateStepUI(state.editedStepIndex, state.steps[state.editedStepIndex]);
         }
     }
 
@@ -315,13 +366,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- BPM/Rate Modal Logic ---
     function openBpmRateModal() {
-        modalBpm = bpm;
-        modalRate = rate;
-        modalBpmValue.textContent = modalBpm;
+        if (state.isPlaying) stopPlayback();
+        state.modalBpm = state.bpm;
+        state.modalRate = state.rate;
+        modalBpmValue.textContent = state.modalBpm;
         modalRateButtons.querySelectorAll('button').forEach(btn => {
-            if (parseFloat(btn.dataset.rate) === modalRate) {
+            const btnRate = parseFloat(btn.dataset.rate);
+            if (btnRate === state.modalRate) {
                 btn.classList.add('selected');
-                modalRateText = btn.textContent;
+                state.modalRateText = btn.textContent;
             } else {
                 btn.classList.remove('selected');
             }
@@ -334,27 +387,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyBpmRateChanges() {
-        bpm = modalBpm;
-        rate = modalRate;
-        bpmRateDisplayButton.textContent = `${bpm} / ${modalRateText}`;
+        state.bpm = state.modalBpm;
+        state.rate = state.modalRate;
+        bpmRateDisplayButton.textContent = `${state.bpm} / ${state.modalRateText}`;
         closeBpmRateModal();
     }
 
     function adjustBpm(amount) {
-        modalBpm = Math.max(BPM_MIN, Math.min(BPM_MAX, modalBpm + amount));
-        modalBpmValue.textContent = modalBpm;
+        state.modalBpm = Math.max(BPM_MIN, Math.min(BPM_MAX, state.modalBpm + amount));
+        modalBpmValue.textContent = state.modalBpm;
     }
 
     // --- Base Note Modal Logic ---
     function openBaseNoteModal() {
-        modalBaseNote = baseNote;
-        modalBaseOctave = baseOctave;
+        if (state.isPlaying) stopPlayback();
+        state.modalBaseNote = state.baseNote;
+        state.modalBaseOctave = state.baseOctave;
         
         modalNoteNameButtons.querySelectorAll('button').forEach(btn => {
-            btn.classList.toggle('selected', btn.dataset.note === modalBaseNote);
+            btn.classList.toggle('selected', btn.dataset.note === state.modalBaseNote);
         });
         modalOctaveButtons.querySelectorAll('button').forEach(btn => {
-            btn.classList.toggle('selected', parseInt(btn.dataset.octave) === modalBaseOctave);
+            btn.classList.toggle('selected', parseInt(btn.dataset.octave) === state.modalBaseOctave);
         });
 
         baseNoteModal.style.display = 'flex';
@@ -365,93 +419,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyBaseNoteChanges() {
-        baseNote = modalBaseNote;
-        baseOctave = modalBaseOctave;
-        baseNoteDisplayButton.textContent = `${baseNote}${baseOctave}`;
+        state.baseNote = state.modalBaseNote;
+        state.baseOctave = state.modalBaseOctave;
+        baseNoteDisplayButton.textContent = `${state.baseNote}${state.baseOctave}`;
         updateAllStepsUI();
         closeBaseNoteModal();
     }
 
     // --- Melody Gen Modal Logic ---
     function openMelodyGenModal() {
-        if (isPlaying) stopPlayback();
-        previewSteps = null;
+        if (state.isPlaying) stopPlayback();
+        state.previewSteps = null;
         applyMelodyButton.disabled = true;
         melodyGenModal.style.display = 'flex';
     }
 
-    function stopPreview() {
-        isPreviewPlaying = false;
-        clearTimeout(previewTimerId);
-        previewTimerId = null;
-
-        if (currentPreviewOscillator) {
-            currentPreviewOscillator.stop(audioContext.currentTime);
-            currentPreviewOscillator = null;
-        }
-
-        const activePreviewStep = sequencerGrid.querySelector('.active-preview');
-        if (activePreviewStep) {
-            activePreviewStep.classList.remove('active-preview');
-        }
-        previewMelodyButton.disabled = false;
-        applyMelodyButton.disabled = previewSteps === null;
-    }
-
     function closeMelodyGenModal() {
-        if (isPreviewPlaying) {
-            stopPreview();
-        }
-        previewSteps = null;
+        if (state.isPlaying) stopPlayback();
+        state.previewSteps = null;
+        updateAllStepsUI(); // Restore main sequence view
         melodyGenModal.style.display = 'none';
-    }
-
-    function playPreview(previewSequence) {
-        initAudio();
-        if (isPreviewPlaying) {
-            stopPreview();
-        }
-        isPreviewPlaying = true;
-        previewMelodyButton.disabled = true;
-        applyMelodyButton.disabled = true;
-
-        let previewStep = 0;
-        let previousStepEl = null;
-
-        function previewStepPlayer() {
-            if (!isPreviewPlaying) {
-                if(previousStepEl) previousStepEl.classList.remove('active-preview');
-                return;
-            }
-
-            if (currentPreviewOscillator) {
-                currentPreviewOscillator.stop(audioContext.currentTime);
-            }
-
-            if (previousStepEl) {
-                previousStepEl.classList.remove('active-preview');
-            }
-
-            const stepData = previewSequence[previewStep];
-            const stepElement = sequencerGrid.children[previewStep];
-            stepElement.classList.add('active-preview');
-            previousStepEl = stepElement;
-
-            const baseMidi = noteToMidi(baseNote, baseOctave);
-            const finalMidi = baseMidi + stepData.transpose;
-            currentPreviewOscillator = playSound(finalMidi);
-
-            previewStep++;
-
-            if (previewStep >= seqMax) {
-                previewTimerId = setTimeout(() => {
-                    stopPreview();
-                }, (60000 / bpm) / rate);
-            } else {
-                previewTimerId = setTimeout(previewStepPlayer, (60000 / bpm) / rate);
-            }
-        }
-        previewStepPlayer();
     }
 
     function generateAndPreviewMelody() {
@@ -460,12 +447,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const scaleIntervals = SCALES[scaleName];
 
         const rootNoteIndex = NOTE_NAMES.indexOf(key);
-        const baseMidi = noteToMidi(baseNote, baseOctave);
+        const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
 
         const transposePool = [];
         for (let octave = -1; octave <= 1; octave++) {
             for (const interval of scaleIntervals) {
-                const midiNote = rootNoteIndex + (baseOctave + octave) * 12 + interval;
+                const midiNote = rootNoteIndex + (state.baseOctave + octave) * 12 + interval;
                 transposePool.push(midiNote - baseMidi);
             }
         }
@@ -488,19 +475,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        previewSteps = newMelody;
+        state.previewSteps = newMelody;
         applyMelodyButton.disabled = false;
         
+        // Update UI to show preview melody
         for (let i = 0; i < STEPS_COUNT; i++) {
-            updateStepUI(i, previewSteps[i]);
+            updateStepUI(i, state.previewSteps[i]);
         }
 
-        playPreview(previewSteps);
+        startPlayback('preview', newMelody);
     }
 
     function applyMelody() {
-        if (previewSteps) {
-            steps = JSON.parse(JSON.stringify(previewSteps)); // Deep copy
+        if (state.previewSteps) {
+            state.steps = JSON.parse(JSON.stringify(state.previewSteps)); // Deep copy
             updateAllStepsUI();
             closeMelodyGenModal();
         }
@@ -508,10 +496,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
     function handlePlayStop() {
-        if (isPlaying) {
+        if (state.isPlaying) {
             stopPlayback();
         } else {
-            startPlayback();
+            startPlayback('main');
         }
     }
 
@@ -528,7 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initAudio();
         const percentage = parseFloat(transposeSelector.querySelector('.selector-handle').style.left) / 100;
         const transpose = Math.round(percentage * 24) - 12;
-        const baseMidi = noteToMidi(baseNote, baseOctave);
+        const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
         const finalMidi = baseMidi + transpose;
         playAuditionSound(finalMidi);
     });
@@ -546,8 +534,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     modalRateButtons.addEventListener('click', (e) => {
         if (e.target.tagName === 'BUTTON') {
-            modalRate = parseFloat(e.target.dataset.rate);
-            modalRateText = e.target.textContent;
+            state.modalRate = parseFloat(e.target.dataset.rate);
+            state.modalRateText = e.target.textContent;
             modalRateButtons.querySelector('.selected').classList.remove('selected');
             e.target.classList.add('selected');
         }
@@ -561,7 +549,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     modalNoteNameButtons.addEventListener('click', (e) => {
         if (e.target.tagName === 'BUTTON') {
-            modalBaseNote = e.target.dataset.note;
+            state.modalBaseNote = e.target.dataset.note;
             modalNoteNameButtons.querySelector('.selected').classList.remove('selected');
             e.target.classList.add('selected');
         }
@@ -569,7 +557,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     modalOctaveButtons.addEventListener('click', (e) => {
         if (e.target.tagName === 'BUTTON') {
-            modalBaseOctave = parseInt(e.target.dataset.octave, 10);
+            state.modalBaseOctave = parseInt(e.target.dataset.octave, 10);
             modalOctaveButtons.querySelector('.selected').classList.remove('selected');
             e.target.classList.add('selected');
         }
@@ -634,9 +622,10 @@ document.addEventListener('DOMContentLoaded', () => {
             button.classList.add('seq-max-button');
             button.textContent = i;
             button.dataset.value = i;
-            if (i === seqMax) button.classList.add('active');
+            if (i === state.seqMax) button.classList.add('active');
             button.addEventListener('click', () => {
-                seqMax = i;
+                if (state.isPlaying) stopPlayback();
+                state.seqMax = i;
                 const currentActive = seqMaxButtonsContainer.querySelector('.active');
                 if (currentActive) currentActive.classList.remove('active');
                 button.classList.add('active');
@@ -666,8 +655,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initial UI setup
-    baseNoteDisplayButton.textContent = `${baseNote}${baseOctave}`;
-    bpmRateDisplayButton.textContent = `${bpm} / ${modalRateText}`;
+    baseNoteDisplayButton.textContent = `${state.baseNote}${state.baseOctave}`;
+    bpmRateDisplayButton.textContent = `${state.bpm} / ${state.modalRateText}`;
     createSequencerGrid();
     createSelectorTicks();
     createSeqMaxButtons();
