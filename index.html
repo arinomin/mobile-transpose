@@ -8,36 +8,41 @@
 </head>
 <body>
     <div class="container">
-        <h1>mobile-transpose</h1>
-
-        <div class="global-controls">
-            <div class="control-group">
-                <label>Base Note</label>
-                <button id="base-note-display-button" class="display-button">C4</button>
+        <div class="main-layout">
+            <!-- ===== メインエリア ===== -->
+            <div class="main-content">
+                <h1>mobile-transpose</h1>
+                <div id="sequencer-grid" class="sequencer-grid"></div>
             </div>
-            <div class="control-group">
-                <label>BPM / Rate</label>
-                <button id="bpm-rate-display-button" class="display-button">120 / 16分</button>
+
+            <!-- ===== サイドパネル ===== -->
+            <div class="side-panel">
+                <div class="desktop-actions">
+                    <button id="play-stop-button-desktop" class="play-stop-button">
+                        <svg class="icon-play" viewBox="0 0 24 24" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>
+                        <svg class="icon-stop" viewBox="0 0 24 24" width="24" height="24"><path d="M6 6h12v12H6z"/></svg>
+                    </button>
+                    <button id="melody-gen-button-desktop">Generate Melody</button>
+                    <button id="share-button-desktop">Share</button>
+                </div>
+
+                <div class="global-controls">
+                    <div class="control-group">
+                        <label>Base Note</label>
+                        <button id="base-note-display-button" class="display-button">C4</button>
+                    </div>
+                    <div class="control-group">
+                        <label>BPM / Rate</label>
+                        <button id="bpm-rate-display-button" class="display-button">120 / 16分</button>
+                    </div>
+                </div>
+
+                <div class="seq-max-controls">
+                    <label>SEQ MAX</label>
+                    <div id="seq-max-buttons" class="seq-max-buttons"></div>
+                </div>
             </div>
         </div>
-
-        <div id="sequencer-grid" class="sequencer-grid"></div>
-
-        <div class="seq-max-controls">
-            <label>SEQ MAX</label>
-            <div id="seq-max-buttons" class="seq-max-buttons"></div>
-        </div>
-
-        <!-- Desktop-only action buttons -->
-        <div class="desktop-actions">
-            <button id="play-stop-button-desktop" class="play-stop-button">
-                <svg class="icon-play" viewBox="0 0 24 24" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>
-                <svg class="icon-stop" viewBox="0 0 24 24" width="24" height="24"><path d="M6 6h12v12H6z"/></svg>
-            </button>
-            <button id="melody-gen-button-desktop">Generate Melody</button>
-            <button id="share-button-desktop">Share</button>
-        </div>
-
     </div>
 
     <!-- Mobile-only footer menu -->
