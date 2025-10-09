@@ -358,12 +358,19 @@ document.addEventListener('DOMContentLoaded', () => {
         modalStepNumber.textContent = `#${stepIndex + 1}`;
         const stepData = state.steps[stepIndex];
         updateStepModalInfo(stepData.transpose);
-        
-        // Find or create the toggle switch
-        let toggle = document.getElementById('step-enable-toggle');
+
+        const toggle = document.getElementById('step-enable-toggle');
         if (toggle) {
             toggle.checked = stepData.enabled;
+            // This event handler is reassigned each time the modal opens.
+            toggle.onchange = (e) => {
+                if (state.editedStepIndex !== null) {
+                    state.steps[state.editedStepIndex].enabled = e.target.checked;
+                    updateStepUI(state.editedStepIndex, state.steps[state.editedStepIndex]);
+                }
+            };
         }
+
 
         stepModal.style.display = 'flex';
 
@@ -375,7 +382,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeStepModal() {
         stepModal.style.display = 'none';
-
+        // The state is already updated by the toggle's onchange event,
+        // so we just need to hide the modal and clean up listeners.
         isDragging = false;
         document.removeEventListener('mousemove', onDrag);
         document.removeEventListener('mouseup', endDrag);
@@ -618,12 +626,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('touchend', endDrag);
 
     // --- Initialization ---
-    function toggleStepEnabled(index) {
-        const step = state.steps[index];
-        step.enabled = !step.enabled;
-        updateStepUI(index, step);
-    }
-
     function createSequencerGrid() {
         sequencerGrid.innerHTML = '';
         for (let i = 0; i < STEPS_COUNT; i++) {
@@ -643,40 +645,10 @@ document.addEventListener('DOMContentLoaded', () => {
             stepElement.appendChild(transposeEl);
             stepElement.appendChild(noteEl);
 
-            let pressTimer;
-            let isClick = true;
-
-            stepElement.addEventListener('mousedown', (e) => {
-                isClick = true;
-                pressTimer = setTimeout(() => {
-                    isClick = false;
-                    openStepModal(i);
-                }, 350);
+            // Open the modal on click to edit the step.
+            stepElement.addEventListener('click', () => {
+                openStepModal(i);
             });
-
-            stepElement.addEventListener('mouseup', () => {
-                clearTimeout(pressTimer);
-                if (isClick) {
-                    toggleStepEnabled(i);
-                }
-            });
-
-            stepElement.addEventListener('touchstart', (e) => {
-                isClick = true;
-                pressTimer = setTimeout(() => {
-                    isClick = false;
-                    openStepModal(i);
-                }, 350);
-            }, { passive: true });
-
-            stepElement.addEventListener('touchend', () => {
-                clearTimeout(pressTimer);
-                if (isClick) {
-                    toggleStepEnabled(i);
-                }
-            });
-            
-            stepElement.addEventListener('dragstart', () => clearTimeout(pressTimer));
 
             sequencerGrid.appendChild(stepElement);
         }
