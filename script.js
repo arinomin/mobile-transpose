@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const doneBaseNoteButton = document.getElementById('done-base-note-button');
     const modalNoteNameButtons = document.getElementById('modal-note-name-buttons');
     const modalOctaveButtons = document.getElementById('modal-octave-buttons');
+    const modalWaveformButtons = document.getElementById('modal-waveform-buttons');
 
     const melodyGenModal = document.getElementById('melody-gen-modal');
     const closeMelodyGenModalButton = document.getElementById('close-melody-gen-modal-button');
@@ -50,6 +51,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const STEPS_COUNT = 16;
     const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     const OCTAVES = [1, 2, 3, 4, 5, 6, 7];
+    const WAVEFORMS = {
+        'sine': 'Sine',
+        'square': 'Square',
+        'sawtooth': 'Saw',
+        'triangle': 'Triangle'
+    };
     const MAJOR_TICKS = [-12, -7, 0, 7, 12];
     const INTERVAL_NAMES = {
         '-12': 'Octave Down', '-7': 'Perfect 5th Down', '0': 'Unison', '7': 'Perfect 5th Up', '12': 'Octave Up',
@@ -71,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
         rate: 4,
         baseNote: 'C',
         baseOctave: 4,
+        waveform: 'sawtooth', // Default waveform
         seqMax: STEPS_COUNT,
         pendingSeqMax: null, // For seamless seqMax change
         steps: Array(STEPS_COUNT).fill(0).map(() => ({ transpose: 0, enabled: true })),
@@ -93,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalRateText: '16分',
         modalBaseNote: 'C',
         modalBaseOctave: 4,
+        modalWaveform: 'sawtooth',
 
         // Melody Generation State
         previewSteps: null,
@@ -135,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const oscillator = state.audioContext.createOscillator();
         const gainNode = state.audioContext.createGain();
         
-        oscillator.type = 'sine';
+        oscillator.type = state.waveform;
         oscillator.frequency.setValueAtTime(midiToFreq(midiNote), startTime);
 
         const attackTime = 0.01;
@@ -455,12 +464,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.isPlaying) stopPlayback();
         state.modalBaseNote = state.baseNote;
         state.modalBaseOctave = state.baseOctave;
+        state.modalWaveform = state.waveform;
         
         modalNoteNameButtons.querySelectorAll('button').forEach(btn => {
             btn.classList.toggle('selected', btn.dataset.note === state.modalBaseNote);
         });
         modalOctaveButtons.querySelectorAll('button').forEach(btn => {
             btn.classList.toggle('selected', parseInt(btn.dataset.octave) === state.modalBaseOctave);
+        });
+        modalWaveformButtons.querySelectorAll('button').forEach(btn => {
+            btn.classList.toggle('selected', btn.dataset.wave === state.modalWaveform);
         });
 
         baseNoteModal.style.display = 'flex';
@@ -473,6 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyBaseNoteChanges() {
         state.baseNote = state.modalBaseNote;
         state.baseOctave = state.modalBaseOctave;
+        state.waveform = state.modalWaveform;
         baseNoteDisplayButton.textContent = `${state.baseNote}${state.baseOctave}`;
         updateAllStepsUI();
         closeBaseNoteModal();
@@ -605,6 +619,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.tagName === 'BUTTON') {
             state.modalBaseOctave = parseInt(e.target.dataset.octave, 10);
             modalOctaveButtons.querySelector('.selected').classList.remove('selected');
+            e.target.classList.add('selected');
+        }
+    });
+
+    modalWaveformButtons.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            state.modalWaveform = e.target.dataset.wave;
+            modalWaveformButtons.querySelector('.selected').classList.remove('selected');
             e.target.classList.add('selected');
         }
     });
@@ -770,6 +792,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function createModalWaveformButtons() {
+        modalWaveformButtons.innerHTML = '';
+        for (const [waveValue, waveText] of Object.entries(WAVEFORMS)) {
+            const button = document.createElement('button');
+            button.textContent = waveText;
+            button.dataset.wave = waveValue;
+            modalWaveformButtons.appendChild(button);
+        }
+    }
+
     // Initial UI setup
     baseNoteDisplayButton.textContent = `${state.baseNote}${state.baseOctave}`;
     bpmRateDisplayButton.textContent = `${state.bpm} / ${state.modalRateText}`;
@@ -778,6 +810,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createSeqMaxButtons();
     createModalNoteButtons();
     createModalOctaveButtons();
+    createModalWaveformButtons();
     updateAllStepsUI();
     updatePlayButtons(false);
 
@@ -787,12 +820,16 @@ document.addEventListener('DOMContentLoaded', () => {
     sequencerGrid.addEventListener('drop', handleDrop, false);
     sequencerGrid.addEventListener('dragend', handleDragEnd, false);
 
-    const SHARE_FORMAT_VERSION = 'v4';
+    const SHARE_FORMAT_VERSION = 'v5';
     const RATES = [4, 3, 2, 1.5, 1, 0.5, 0.25];
+    const WAVE_SERIALIZE_MAP = { 'sine': 's', 'square': 'q', 'sawtooth': 'w', 'triangle': 't' };
+    const WAVE_DESERIALIZE_MAP = { 's': 'sine', 'q': 'square', 'w': 'sawtooth', 't': 'triangle' };
+
 
     function serializeState() {
         const rateIndex = RATES.indexOf(state.rate);
         const noteIndex = NOTE_NAMES.indexOf(state.baseNote);
+        const waveChar = WAVE_SERIALIZE_MAP[state.waveform] || 'w';
         const stepStr = state.steps.map(s => (s.transpose + 12).toString(36)).join('');
         const enabledFlags = state.steps.slice(0, 16).reduce((acc, step, i) => acc | ((step.enabled ? 1 : 0) << i), 0);
         const enabledStr = enabledFlags.toString(36).padStart(3, '0');
@@ -803,6 +840,7 @@ document.addEventListener('DOMContentLoaded', () => {
             rateIndex,
             noteIndex.toString(36),
             state.baseOctave,
+            waveChar,
             state.seqMax.toString(36),
             enabledStr,
             stepStr
@@ -829,7 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const dataString = decodeURIComponent(window.location.hash.substring(1));
             
             const version = dataString.substring(0, 2);
-            if (version !== 'v4' && version !== 'v3') {
+            if (version !== 'v5' && version !== 'v4' && version !== 'v3') {
                 console.warn(`URL data version (${version}) is not supported.`);
                 return;
             }
@@ -839,10 +877,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const rateIndex = parseInt(dataString.substring(pos, pos += 1), 10);
             const noteIndex = parseInt(dataString.substring(pos, pos += 1), 36);
             const baseOctave = parseInt(dataString.substring(pos, pos += 1), 10);
+            
+            let waveform = 'sawtooth'; // Default for older versions
+            if (version === 'v5') {
+                const waveChar = dataString.substring(pos, pos += 1);
+                waveform = WAVE_DESERIALIZE_MAP[waveChar] || 'sawtooth';
+            }
+
             const seqMax = parseInt(dataString.substring(pos, pos += 1), 36);
 
             let enabledFlags = 0b1111111111111111; // Default to all enabled for v3
-            if (version === 'v4') {
+            if (version === 'v4' || version === 'v5') {
                 const enabledStr = dataString.substring(pos, pos += 3);
                 enabledFlags = parseInt(enabledStr, 36);
             }
@@ -854,6 +899,7 @@ document.addEventListener('DOMContentLoaded', () => {
             state.rate = RATES[rateIndex];
             state.baseNote = NOTE_NAMES[noteIndex];
             state.baseOctave = baseOctave;
+            state.waveform = waveform;
             state.seqMax = seqMax;
             
             for (let i = 0; i < state.steps.length; i++) {
@@ -872,6 +918,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             state.modalBaseNote = state.baseNote;
             state.modalBaseOctave = state.baseOctave;
+            state.modalWaveform = state.waveform;
             baseNoteDisplayButton.textContent = `${state.baseNote}${state.baseOctave}`;
 
             const currentActive = seqMaxButtonsContainer.querySelector('.active');

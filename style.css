@@ -579,11 +579,11 @@ button:disabled {
     margin-left: 8px;
 }
 
-.note-name-editor, .octave-editor {
+.note-name-editor, .octave-editor, .waveform-editor {
     margin-bottom: 24px;
 }
 
-.note-name-editor h3, .octave-editor h3 {
+.note-name-editor h3, .octave-editor h3, .waveform-editor h3 {
     margin-top: 0;
     margin-bottom: 16px;
     font-size: 1.2em;
@@ -603,7 +603,13 @@ button:disabled {
     gap: 8px;
 }
 
-.note-name-buttons button, .octave-buttons button {
+.waveform-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.note-name-buttons button, .octave-buttons button, .waveform-buttons button {
     background-color: var(--tertiary-bg);
     padding: 16px 8px;
     font-size: 1em;
@@ -611,7 +617,7 @@ button:disabled {
     border-radius: 6px;
 }
 
-.note-name-buttons button.selected, .octave-buttons button.selected {
+.note-name-buttons button.selected, .octave-buttons button.selected, .waveform-buttons button.selected {
     background-color: var(--accent-color);
     border-color: var(--accent-color);
     color: white;
