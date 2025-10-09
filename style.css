@@ -178,6 +178,10 @@ button:disabled {
     background-color: var(--primary-bg);
 }
 
+.step.step-disabled {
+    opacity: 0.4;
+}
+
 .step-number {
     position: absolute;
     top: 4px;

@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         baseOctave: 4,
         seqMax: STEPS_COUNT,
         pendingSeqMax: null, // For seamless seqMax change
-        steps: Array(STEPS_COUNT).fill(0).map(() => ({ transpose: 0 })),
+        steps: Array(STEPS_COUNT).fill(0).map(() => ({ transpose: 0, enabled: true })),
         currentStep: 0,
         isPlaying: false, // Covers both main and preview playback
         playbackMode: 'main', // 'main' or 'preview'
@@ -195,9 +195,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (stepNumber >= state.seqMax && state.playbackMode === 'main') return;
 
+        const stepData = sequence[stepNumber];
+        if (!stepData.enabled) {
+            state.notesInQueue.push({ note: stepNumber, time: time, isPreview: isPreview, isDisabled: true });
+            return; // Do not play disabled steps
+        }
+
         state.notesInQueue.push({ note: stepNumber, time: time, isPreview: isPreview });
 
-        const stepData = sequence[stepNumber];
         const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
         const finalMidi = baseMidi + stepData.transpose;
         const noteDuration = (60.0 / state.bpm) / state.rate;
@@ -239,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (drawStepInfo.note < state.seqMax || drawStepInfo.isPreview) {
                 const newStepEl = sequencerGrid.children[drawStepInfo.note];
-                if (newStepEl) {
+                if (newStepEl && !drawStepInfo.isDisabled) { // Only highlight if not disabled
                     newStepEl.classList.add(drawStepInfo.isPreview ? 'active-preview' : 'active');
                 }
             }
@@ -294,10 +299,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         state.lastStepDrawn = -1;
 
-        state.masterGainNode.gain.cancelScheduledValues(state.audioContext.currentTime);
-        state.masterGainNode.gain.setValueAtTime(state.masterGainNode.gain.value, state.audioContext.currentTime);
-        state.masterGainNode.gain.linearRampToValueAtTime(0.0, state.audioContext.currentTime + 0.05);
-        state.masterGainNode.gain.linearRampToValueAtTime(1.0, state.audioContext.currentTime + 0.1);
+        if (state.audioContext) {
+            state.masterGainNode.gain.cancelScheduledValues(state.audioContext.currentTime);
+            state.masterGainNode.gain.setValueAtTime(state.masterGainNode.gain.value, state.audioContext.currentTime);
+            state.masterGainNode.gain.linearRampToValueAtTime(0.0, state.audioContext.currentTime + 0.05);
+            state.masterGainNode.gain.linearRampToValueAtTime(1.0, state.audioContext.currentTime + 0.1);
+        }
 
         state.currentStep = 0;
 
@@ -320,12 +327,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
         const finalMidi = baseMidi + stepData.transpose;
         stepElement.querySelector('.step-note').textContent = getNoteName(finalMidi);
+        stepElement.classList.toggle('step-disabled', !stepData.enabled);
     }
 
     function updateAllStepsUI() {
         const sequence = state.playbackMode === 'preview' && state.previewSteps ? state.previewSteps : state.steps;
         for (let i = 0; i < STEPS_COUNT; i++) {
-            updateStepUI(i, sequence[i]);
+            // Ensure sequence has a valid step object
+            const stepData = sequence[i] || { transpose: 0, enabled: true };
+            updateStepUI(i, stepData);
         }
         updateDisabledStepsUI();
     }
@@ -346,8 +356,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.isPlaying) stopPlayback();
         state.editedStepIndex = stepIndex;
         modalStepNumber.textContent = `#${stepIndex + 1}`;
-        const transpose = state.steps[stepIndex].transpose;
-        updateStepModalInfo(transpose);
+        const stepData = state.steps[stepIndex];
+        updateStepModalInfo(stepData.transpose);
+        
+        // Find or create the toggle switch
+        let toggle = document.getElementById('step-enable-toggle');
+        if (toggle) {
+            toggle.checked = stepData.enabled;
+        }
+
         stepModal.style.display = 'flex';
 
         document.addEventListener('mousemove', onDrag);
@@ -491,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const newMelody = [];
         for (let i = 0; i < STEPS_COUNT; i++) {
-            newMelody.push({ transpose: uniqueTransposes[currentIndex] });
+            newMelody.push({ transpose: uniqueTransposes[currentIndex], enabled: true });
             const randomChoice = Math.random();
             if (randomChoice < 0.2) {
             } else if (randomChoice < 0.6) {
@@ -601,6 +618,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('touchend', endDrag);
 
     // --- Initialization ---
+    function toggleStepEnabled(index) {
+        const step = state.steps[index];
+        step.enabled = !step.enabled;
+        updateStepUI(index, step);
+    }
+
     function createSequencerGrid() {
         sequencerGrid.innerHTML = '';
         for (let i = 0; i < STEPS_COUNT; i++) {
@@ -608,6 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stepElement.classList.add('step');
             stepElement.dataset.index = i;
             stepElement.draggable = true;
+
             const stepNumberEl = document.createElement('div');
             stepNumberEl.classList.add('step-number');
             stepNumberEl.textContent = i + 1;
@@ -618,7 +642,42 @@ document.addEventListener('DOMContentLoaded', () => {
             stepElement.appendChild(stepNumberEl);
             stepElement.appendChild(transposeEl);
             stepElement.appendChild(noteEl);
-            stepElement.addEventListener('click', () => openStepModal(i));
+
+            let pressTimer;
+            let isClick = true;
+
+            stepElement.addEventListener('mousedown', (e) => {
+                isClick = true;
+                pressTimer = setTimeout(() => {
+                    isClick = false;
+                    openStepModal(i);
+                }, 350);
+            });
+
+            stepElement.addEventListener('mouseup', () => {
+                clearTimeout(pressTimer);
+                if (isClick) {
+                    toggleStepEnabled(i);
+                }
+            });
+
+            stepElement.addEventListener('touchstart', (e) => {
+                isClick = true;
+                pressTimer = setTimeout(() => {
+                    isClick = false;
+                    openStepModal(i);
+                }, 350);
+            }, { passive: true });
+
+            stepElement.addEventListener('touchend', () => {
+                clearTimeout(pressTimer);
+                if (isClick) {
+                    toggleStepEnabled(i);
+                }
+            });
+            
+            stepElement.addEventListener('dragstart', () => clearTimeout(pressTimer));
+
             sequencerGrid.appendChild(stepElement);
         }
     }
@@ -756,13 +815,15 @@ document.addEventListener('DOMContentLoaded', () => {
     sequencerGrid.addEventListener('drop', handleDrop, false);
     sequencerGrid.addEventListener('dragend', handleDragEnd, false);
 
-    const SHARE_FORMAT_VERSION = 'v3';
+    const SHARE_FORMAT_VERSION = 'v4';
     const RATES = [4, 3, 2, 1.5, 1, 0.5, 0.25];
 
     function serializeState() {
         const rateIndex = RATES.indexOf(state.rate);
         const noteIndex = NOTE_NAMES.indexOf(state.baseNote);
         const stepStr = state.steps.map(s => (s.transpose + 12).toString(36)).join('');
+        const enabledFlags = state.steps.slice(0, 16).reduce((acc, step, i) => acc | ((step.enabled ? 1 : 0) << i), 0);
+        const enabledStr = enabledFlags.toString(36).padStart(3, '0');
 
         const parts = [
             SHARE_FORMAT_VERSION,
@@ -771,6 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
             noteIndex.toString(36),
             state.baseOctave,
             state.seqMax.toString(36),
+            enabledStr,
             stepStr
         ];
         return parts.join('');
@@ -795,32 +857,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const dataString = decodeURIComponent(window.location.hash.substring(1));
             
             const version = dataString.substring(0, 2);
-            if (version !== SHARE_FORMAT_VERSION) {
-                console.warn(`URL data version (${version}) does not match current version (${SHARE_FORMAT_VERSION}).`);
+            if (version !== 'v4' && version !== 'v3') {
+                console.warn(`URL data version (${version}) is not supported.`);
                 return;
             }
 
             let pos = 2;
-            const bpm = dataString.substring(pos, pos += 2);
-            const rateIndex = dataString.substring(pos, pos += 1);
-            const noteIndex = dataString.substring(pos, pos += 1);
-            const baseOctave = dataString.substring(pos, pos += 1);
-            const seqMax = dataString.substring(pos, pos += 1);
-            const stepStr = dataString.substring(pos);
+            const bpm = parseInt(dataString.substring(pos, pos += 2), 36);
+            const rateIndex = parseInt(dataString.substring(pos, pos += 1), 10);
+            const noteIndex = parseInt(dataString.substring(pos, pos += 1), 36);
+            const baseOctave = parseInt(dataString.substring(pos, pos += 1), 10);
+            const seqMax = parseInt(dataString.substring(pos, pos += 1), 36);
 
-            state.bpm = parseInt(bpm, 36);
-            state.rate = RATES[parseInt(rateIndex, 10)];
-            state.baseNote = NOTE_NAMES[parseInt(noteIndex, 36)];
-            state.baseOctave = parseInt(baseOctave, 10);
-            state.seqMax = parseInt(seqMax, 36);
+            let enabledFlags = 0b1111111111111111; // Default to all enabled for v3
+            if (version === 'v4') {
+                const enabledStr = dataString.substring(pos, pos += 3);
+                enabledFlags = parseInt(enabledStr, 36);
+            }
             
+            const stepStr = dataString.substring(pos);
             const transposes = [...stepStr].map(char => parseInt(char, 36) - 12);
+
+            state.bpm = bpm;
+            state.rate = RATES[rateIndex];
+            state.baseNote = NOTE_NAMES[noteIndex];
+            state.baseOctave = baseOctave;
+            state.seqMax = seqMax;
+            
             for (let i = 0; i < state.steps.length; i++) {
+                state.steps[i].enabled = (enabledFlags & (1 << i)) !== 0;
                 if (transposes[i] !== undefined) {
                     state.steps[i].transpose = transposes[i];
                 }
             }
 
+            // --- Update UI from loaded state ---
             state.modalBpm = state.bpm;
             state.modalRate = state.rate;
             const rateButton = modalRateButtons.querySelector(`button[data-rate="${state.rate}"]`);
@@ -835,9 +906,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentActive) currentActive.classList.remove('active');
             const newActive = seqMaxButtonsContainer.querySelector(`button[data-value="${state.seqMax}"]`);
             if (newActive) newActive.classList.add('active');
-            updateDisabledStepsUI();
-
-            updateAllStepsUI();
+            
+            updateAllStepsUI(); // This will now also handle the enabled state visually
 
             alert('URLからシーケンスを復元しました。');
 
