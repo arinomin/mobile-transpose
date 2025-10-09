@@ -403,13 +403,15 @@ button:disabled {
 
 .modal-footer {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     margin-top: 32px;
-    gap: 16px;
+    gap: 8px;
 }
 
 .modal-footer button {
-    width: 45%;
+    flex: 1;
+    padding: 16px 12px; /* Adjust padding to prevent overflow */
+    min-width: 0; /* Allow buttons to shrink */
 }
 
 #reset-button {
@@ -558,7 +560,8 @@ button:disabled {
     color: white;
 }
 
-#done-bpm-rate-button {
+#done-bpm-rate-button,
+#done-base-note-button {
     width: 100%;
     padding: 24px;
     font-size: 1.3em;

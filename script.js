@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sequencerGrid = document.getElementById('sequencer-grid');
     const stepModal = document.getElementById('step-modal');
     const closeModalBtn = document.getElementById('close-modal-button');
+    const doneStepButton = document.getElementById('done-step-button');
     const modalStepNumber = document.getElementById('modal-step-number');
     const transposeValueDisplay = document.getElementById('transpose-value-display');
     const intervalNameDisplay = document.getElementById('interval-name-display');
@@ -532,6 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     stepModal.addEventListener('click', (e) => { if (e.target === stepModal) closeStepModal(); });
     closeModalBtn.addEventListener('click', closeStepModal);
+    doneStepButton.addEventListener('click', closeStepModal);
     resetBtn.addEventListener('click', () => updateStepModalInfo(0, true));
     auditionBtn.addEventListener('click', () => {
         initAudio();
