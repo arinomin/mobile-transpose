@@ -300,9 +300,9 @@ button:disabled {
 
 .play-stop-button {
     grid-column: 2;
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
+    width: 140px;
+    height: 56px;
+    border-radius: 28px;
     padding: 0;
     display: flex;
     justify-content: center;
@@ -310,6 +310,16 @@ button:disabled {
     background-color: rgba(var(--play-color-rgb), 0.2);
     border: 2px solid var(--play-color);
     box-shadow: 0 0 15px -2px var(--play-color);
+    color: white;
+    font-size: 1.2em;
+    font-weight: bold;
+    overflow: hidden; /* Hide content that doesn't fit */
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.play-stop-button:active {
+    transform: scale(0.96);
 }
 
 .play-stop-button.playing {
@@ -318,15 +328,22 @@ button:disabled {
     box-shadow: 0 0 15px -2px var(--stop-color);
 }
 
-.play-stop-button .icon-stop { display: none; }
-.play-stop-button.playing .icon-play { display: none; }
-.play-stop-button.playing .icon-stop { display: block; }
+.play-stop-button .play-content,
+.play-stop-button .stop-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.play-stop-button .stop-content { display: none; }
+.play-stop-button.playing .play-content { display: none; }
+.play-stop-button.playing .stop-content { display: flex; }
 
 .play-stop-button svg {
-    width: 36px;
-    height: 36px;
-    opacity: 1;
-    filter: none; /* Main button icon doesn't need extra shadow */
+    fill: white;
+    width: 24px;
+    height: 24px;
 }
 
 
