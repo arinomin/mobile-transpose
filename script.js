@@ -670,7 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     shareXButton.addEventListener('click', () => {
         const url = shareUrlInput.value;
-        const text = 'このシーケンスをチェック！ #mobile-transpose';
+        const text = 'このシーケンスをチェック！ #mobiletranspose';
         const xUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
         window.open(xUrl, '_blank');
     });
