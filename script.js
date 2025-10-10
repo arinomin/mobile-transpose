@@ -46,6 +46,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewMelodyButton = document.getElementById('preview-melody-button');
     const applyMelodyButton = document.getElementById('apply-melody-button');
 
+    const shareModal = document.getElementById('share-modal');
+    const closeShareModalButton = document.getElementById('close-share-modal-button');
+    const shareUrlInput = document.getElementById('share-url-input');
+    const copyUrlButton = document.getElementById('copy-url-button');
+    const shareXButton = document.getElementById('share-x-button');
+
 
     // --- Constants ---
     const STEPS_COUNT = 16;
@@ -558,6 +564,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- Share Modal Logic ---
+    function openShareModal() {
+        const dataString = serializeState();
+        const url = new URL(window.location.href);
+        url.hash = encodeURIComponent(dataString);
+        shareUrlInput.value = url.toString();
+        shareModal.style.display = 'flex';
+    }
+
+    function closeShareModal() {
+        shareModal.style.display = 'none';
+    }
+
     // --- Event Listeners ---
     function handlePlayStop() {
         if (state.isPlaying) {
@@ -569,6 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     playStopBtn.addEventListener('click', handlePlayStop);
     melodyGenBtn.addEventListener('click', openMelodyGenModal);
+    shareBtn.addEventListener('click', openShareModal);
 
     stepModal.addEventListener('click', (e) => { if (e.target === stepModal) closeStepModal(); });
     closeModalBtn.addEventListener('click', closeStepModal);
@@ -635,6 +655,25 @@ document.addEventListener('DOMContentLoaded', () => {
     melodyGenModal.addEventListener('click', (e) => { if (e.target === melodyGenModal) closeMelodyGenModal(); });
     previewMelodyButton.addEventListener('click', generateAndPreviewMelody);
     applyMelodyButton.addEventListener('click', applyMelody);
+
+    shareModal.addEventListener('click', (e) => { if (e.target === shareModal) closeShareModal(); });
+    closeShareModalButton.addEventListener('click', closeShareModal);
+
+    copyUrlButton.addEventListener('click', () => {
+        navigator.clipboard.writeText(shareUrlInput.value).then(() => {
+            copyUrlButton.textContent = 'コピーしました！';
+            setTimeout(() => { copyUrlButton.textContent = 'URLをコピー'; }, 2000);
+        }, () => {
+            alert('クリップボードへのコピーに失敗しました。');
+        });
+    });
+
+    shareXButton.addEventListener('click', () => {
+        const url = shareUrlInput.value;
+        const text = 'このシーケンスをチェック！ #mobiletranspose';
+        const xUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+        window.open(xUrl, '_blank');
+    });
 
     let isDragging = false;
     const startDrag = (e) => { isDragging = true; handleSelectorInteraction(e); };
@@ -832,7 +871,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const waveChar = WAVE_SERIALIZE_MAP[state.waveform] || 'w';
         const stepStr = state.steps.map(s => (s.transpose + 12).toString(36)).join('');
         const enabledFlags = state.steps.slice(0, 16).reduce((acc, step, i) => acc | ((step.enabled ? 1 : 0) << i), 0);
-        const enabledStr = enabledFlags.toString(36).padStart(3, '0');
+        const enabledStr = enabledFlags.toString(36).padStart(4, '0');
 
         const parts = [
             SHARE_FORMAT_VERSION,
@@ -848,18 +887,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return parts.join('');
     }
 
-    function handleShare() {
-        const dataString = serializeState();
-        const url = new URL(window.location.href);
-        url.hash = encodeURIComponent(dataString);
-
-        navigator.clipboard.writeText(url.toString()).then(() => {
-            alert('共有URLをクリップボードにコピーしました！');
-        }, () => {
-            alert('クリップボードへのコピーに失敗しました。手動でURLをコピーしてください。');
-        });
-    }
-
     function loadStateFromHash() {
         if (!window.location.hash) return;
 
@@ -867,7 +894,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const dataString = decodeURIComponent(window.location.hash.substring(1));
             
             const version = dataString.substring(0, 2);
-            if (version !== 'v5' && version !== 'v4' && version !== 'v3') {
+            if (version !== 'v5') {
                 console.warn(`URL data version (${version}) is not supported.`);
                 return;
             }
@@ -878,19 +905,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const noteIndex = parseInt(dataString.substring(pos, pos += 1), 36);
             const baseOctave = parseInt(dataString.substring(pos, pos += 1), 10);
             
-            let waveform = 'sawtooth'; // Default for older versions
-            if (version === 'v5') {
-                const waveChar = dataString.substring(pos, pos += 1);
-                waveform = WAVE_DESERIALIZE_MAP[waveChar] || 'sawtooth';
-            }
+            const waveChar = dataString.substring(pos, pos += 1);
+            const waveform = WAVE_DESERIALIZE_MAP[waveChar] || 'sawtooth';
 
             const seqMax = parseInt(dataString.substring(pos, pos += 1), 36);
 
-            let enabledFlags = 0b1111111111111111; // Default to all enabled for v3
-            if (version === 'v4' || version === 'v5') {
-                const enabledStr = dataString.substring(pos, pos += 3);
-                enabledFlags = parseInt(enabledStr, 36);
-            }
+            const enabledStr = dataString.substring(pos, pos += 4);
+            const enabledFlags = parseInt(enabledStr, 36);
             
             const stepStr = dataString.substring(pos);
             const transposes = [...stepStr].map(char => parseInt(char, 36) - 12);
@@ -935,8 +956,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('URLデータの読み込みに失敗しました。');
         }
     }
-
-    shareBtn.addEventListener('click', handleShare);
 
     loadStateFromHash();
 });

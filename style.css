@@ -708,3 +708,32 @@ input:checked + .slider {
 input:checked + .slider:before {
     transform: translateX(26px);
 }
+
+/* --- Share Modal --- */
+.share-url-display {
+    width: 100%;
+    background-color: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 1em;
+    margin: 16px 0;
+    text-align: center;
+}
+
+.share-buttons-container {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.share-buttons-container .action-button {
+    flex: 1;
+    padding: 16px;
+    font-size: 1em;
+}
+
+#share-x-button {
+    background-color: #1DA1F2; /* Twitter Blue */
+}
