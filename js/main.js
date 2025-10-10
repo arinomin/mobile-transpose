@@ -1,3 +1,20 @@
+import { 
+    state,
+    STEPS_COUNT,
+    NOTE_NAMES,
+    OCTAVES,
+    WAVEFORMS,
+    MAJOR_TICKS,
+    INTERVAL_NAMES,
+    BPM_MIN,
+    BPM_MAX,
+    SCALES,
+    SHARE_FORMAT_VERSION,
+    RATES,
+    WAVE_SERIALIZE_MAP,
+    WAVE_DESERIALIZE_MAP
+} from './state.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const seqMaxButtonsContainer = document.getElementById('seq-max-buttons');
@@ -51,67 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const shareUrlInput = document.getElementById('share-url-input');
     const copyUrlButton = document.getElementById('copy-url-button');
     const shareXButton = document.getElementById('share-x-button');
-
-
-    // --- Constants ---
-    const STEPS_COUNT = 16;
-    const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    const OCTAVES = [1, 2, 3, 4, 5, 6, 7];
-    const WAVEFORMS = {
-        'sine': 'Sine',
-        'square': 'Square',
-        'sawtooth': 'Saw',
-        'triangle': 'Triangle'
-    };
-    const MAJOR_TICKS = [-12, -7, 0, 7, 12];
-    const INTERVAL_NAMES = {
-        '-12': 'Octave Down', '-7': 'Perfect 5th Down', '0': 'Unison', '7': 'Perfect 5th Up', '12': 'Octave Up',
-    };
-    const BPM_MIN = 40;
-    const BPM_MAX = 280;
-    const SCALES = {
-        'major': [0, 2, 4, 5, 7, 9, 11],
-        'minor': [0, 2, 3, 5, 7, 8, 10],
-        'majorPentatonic': [0, 2, 4, 7, 9],
-        'minorPentatonic': [0, 3, 5, 7, 10]
-    };
-
-    // --- State ---
-    const state = {
-        audioContext: null,
-        masterGainNode: null,
-        bpm: 120,
-        rate: 4,
-        baseNote: 'C',
-        baseOctave: 4,
-        waveform: 'sawtooth', // Default waveform
-        seqMax: STEPS_COUNT,
-        pendingSeqMax: null, // For seamless seqMax change
-        steps: Array(STEPS_COUNT).fill(0).map(() => ({ transpose: 0, enabled: true })),
-        currentStep: 0,
-        isPlaying: false, // Covers both main and preview playback
-        playbackMode: 'main', // 'main' or 'preview'
-        editedStepIndex: null,
-        
-        // Scheduler State
-        nextNoteTime: 0.0,
-        scheduleAheadTime: 0.1, // How far ahead to schedule audio (sec)
-        schedulerLookahead: 25.0, // How often to call scheduler function (ms)
-        schedulerTimerId: null,
-        lastStepDrawn: -1,
-        notesInQueue: [],
-
-        // Temporary modal states
-        modalBpm: 120,
-        modalRate: 4,
-        modalRateText: '16分',
-        modalBaseNote: 'C',
-        modalBaseOctave: 4,
-        modalWaveform: 'sawtooth',
-
-        // Melody Generation State
-        previewSteps: null,
-    };
 
 
     // --- Web Audio API Initialization ---
@@ -859,12 +815,6 @@ document.addEventListener('DOMContentLoaded', () => {
     sequencerGrid.addEventListener('drop', handleDrop, false);
     sequencerGrid.addEventListener('dragend', handleDragEnd, false);
 
-    const SHARE_FORMAT_VERSION = 'v5';
-    const RATES = [4, 3, 2, 1.5, 1, 0.5, 0.25];
-    const WAVE_SERIALIZE_MAP = { 'sine': 's', 'square': 'q', 'sawtooth': 'w', 'triangle': 't' };
-    const WAVE_DESERIALIZE_MAP = { 's': 'sine', 'q': 'square', 'w': 'sawtooth', 't': 'triangle' };
-
-
     function serializeState() {
         const rateIndex = RATES.indexOf(state.rate);
         const noteIndex = NOTE_NAMES.indexOf(state.baseNote);
@@ -958,4 +908,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     loadStateFromHash();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').then(registration => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }, err => {
+          console.log('ServiceWorker registration failed: ', err);
+        });
+      });
+    }
 });
