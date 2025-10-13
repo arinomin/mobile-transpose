@@ -62,6 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const melodyScaleSelect = document.getElementById('melody-scale-select');
     const previewMelodyButton = document.getElementById('preview-melody-button');
     const applyMelodyButton = document.getElementById('apply-melody-button');
+    const melodyAlgorithmSelect = document.getElementById('melody-algorithm-select');
+    const melodyRestProbability = document.getElementById('melody-rest-probability');
+    const melodyRestProbabilityValue = document.getElementById('melody-rest-probability-value');
 
     const shareModal = document.getElementById('share-modal');
     const closeShareModalButton = document.getElementById('close-share-modal-button');
@@ -483,7 +486,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
 
         const transposePool = [];
-        for (let octave = -1; octave <= 1; octave++) {
+        // Generate a wider pool of notes for more variation in leaps
+        const octaveRange = state.melodyGenAlgorithm === 'leaps-and-rests' ? 2 : 1;
+        for (let octave = -octaveRange; octave <= octaveRange; octave++) {
             for (const interval of scaleIntervals) {
                 const midiNote = rootNoteIndex + (state.baseOctave + octave) * 12 + interval;
                 transposePool.push(midiNote - baseMidi);
@@ -497,13 +502,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const newMelody = [];
         for (let i = 0; i < STEPS_COUNT; i++) {
-            newMelody.push({ transpose: uniqueTransposes[currentIndex], enabled: true });
-            const randomChoice = Math.random();
-            if (randomChoice < 0.2) {
-            } else if (randomChoice < 0.6) {
-                currentIndex = Math.min(uniqueTransposes.length - 1, currentIndex + 1);
+            // Rests
+            const isRest = Math.random() < state.melodyGenRestProbability;
+            if (isRest) {
+                newMelody.push({ transpose: uniqueTransposes[currentIndex], enabled: false });
+                // Don't move index on a rest to avoid large silent gaps
             } else {
-                currentIndex = Math.max(0, currentIndex - 1);
+                newMelody.push({ transpose: uniqueTransposes[currentIndex], enabled: true });
+
+                // Move current index for next note
+                if (state.melodyGenAlgorithm === 'simple-walk') {
+                    const randomChoice = Math.random();
+                    if (randomChoice < 0.2) { // Stay
+                    } else if (randomChoice < 0.6) { // Step up
+                        currentIndex = Math.min(uniqueTransposes.length - 1, currentIndex + 1);
+                    } else { // Step down
+                        currentIndex = Math.max(0, currentIndex - 1);
+                    }
+                } else { // leaps-and-rests
+                    const randomChoice = Math.random();
+                    let nextIndex;
+                    if (randomChoice < 0.5) { // Small step
+                        const direction = Math.random() < 0.5 ? -1 : 1;
+                        nextIndex = currentIndex + direction;
+                    } else { // Leap
+                        const leapSize = Math.floor(Math.random() * 4) + 2; // Leap of 2 to 5
+                        const direction = Math.random() < 0.5 ? -1 : 1;
+                        nextIndex = currentIndex + (leapSize * direction);
+                    }
+                    // Clamp index to be within the pool
+                    currentIndex = Math.max(0, Math.min(uniqueTransposes.length - 1, nextIndex));
+                }
             }
         }
 
@@ -616,6 +645,20 @@ document.addEventListener('DOMContentLoaded', () => {
     melodyGenModal.addEventListener('click', (e) => { if (e.target === melodyGenModal) closeMelodyGenModal(); });
     previewMelodyButton.addEventListener('click', generateAndPreviewMelody);
     applyMelodyButton.addEventListener('click', applyMelody);
+
+    melodyAlgorithmSelect.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            state.melodyGenAlgorithm = e.target.dataset.value;
+            melodyAlgorithmSelect.querySelector('.selected').classList.remove('selected');
+            e.target.classList.add('selected');
+        }
+    });
+
+    melodyRestProbability.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        state.melodyGenRestProbability = value;
+        melodyRestProbabilityValue.textContent = `${Math.round(value * 100)}%`;
+    });
 
     shareModal.addEventListener('click', (e) => { if (e.target === shareModal) closeShareModal(); });
     closeShareModalButton.addEventListener('click', closeShareModal);

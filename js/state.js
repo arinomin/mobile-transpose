@@ -59,4 +59,6 @@ export const state = {
 
     // Melody Generation State
     previewSteps: null,
+    melodyGenAlgorithm: 'simple-walk',
+    melodyGenRestProbability: 0.2,
 };

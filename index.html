@@ -189,6 +189,20 @@
                         <option value="minorPentatonic">Minor Pentatonic</option>
                     </select>
                 </div>
+                <div class="melody-gen-control">
+                    <label>Algorithm</label>
+                    <div id="melody-algorithm-select" class="radio-group">
+                        <button data-value="simple-walk" class="radio-button selected">Simple Walk</button>
+                        <button data-value="leaps-and-rests" class="radio-button">Leaps & Rests</button>
+                    </div>
+                </div>
+                <div class="melody-gen-control">
+                    <label for="melody-rest-probability">Rest Probability</label>
+                    <div class="slider-container">
+                        <input type="range" id="melody-rest-probability" min="0" max="0.8" step="0.1" value="0.2">
+                        <span id="melody-rest-probability-value">20%</span>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button id="preview-melody-button">Generate & Preview</button>
