@@ -895,7 +895,7 @@ document.addEventListener('DOMContentLoaded', () => {
             state.modalBaseNote = state.baseNote;
             state.modalBaseOctave = state.baseOctave;
             state.modalWaveform = state.waveform;
-            baseNoteDisplayButton.textContent = `${state.baseNote}${state.baseOctave}`;
+            updateBaseNoteDisplay();
 
             const currentActive = seqMaxButtonsContainer.querySelector('.active');
             if (currentActive) currentActive.classList.remove('active');
