@@ -319,6 +319,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function updateBaseNoteDisplay() {
+        const waveText = WAVEFORMS[state.waveform] || 'ERR';
+        baseNoteDisplayButton.textContent = `${state.baseNote}${state.baseOctave}/${waveText.toUpperCase()}`;
+    }
+
     // --- Step Modal Logic ---
     function openStepModal(stepIndex) {
         const limit = state.pendingSeqMax !== null ? state.pendingSeqMax : state.seqMax;
@@ -449,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.baseNote = state.modalBaseNote;
         state.baseOctave = state.modalBaseOctave;
         state.waveform = state.modalWaveform;
-        baseNoteDisplayButton.textContent = `${state.baseNote}${state.baseOctave}`;
+        updateBaseNoteDisplay();
         updateAllStepsUI();
         closeBaseNoteModal();
     }
@@ -798,7 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initial UI setup
-    baseNoteDisplayButton.textContent = `${state.baseNote}${state.baseOctave}`;
+    updateBaseNoteDisplay();
     bpmRateDisplayButton.textContent = `${state.bpm} / ${state.modalRateText}`;
     createSequencerGrid();
     createSelectorTicks();
