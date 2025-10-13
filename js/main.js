@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateBaseNoteDisplay() {
         const waveText = WAVEFORMS[state.waveform] || 'ERR';
-        baseNoteDisplayButton.textContent = `${state.baseNote}${state.baseOctave}/${waveText.toUpperCase()}`;
+        baseNoteDisplayButton.textContent = `${state.baseNote}${state.baseOctave} / ${waveText.toUpperCase()}`;
     }
 
     // --- Step Modal Logic ---
