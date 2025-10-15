@@ -45,8 +45,24 @@ export const helpContent = {
             ja: "スケール (音階)"
         },
         content: {
-            en: "The set of notes that the melody generator will use. Different scales create different moods (e.g., Major for happy, Minor for sad).",
-            ja: "メロディー生成に使用される音のグループです。スケールによってメロディーの雰囲気（例：メジャーは明るい、マイナーは悲しい）が変わります。"
+            en: `Determines the musical mood. Each scale is a unique set of notes.
+- Major: Happy, bright sound.
+- Natural Minor: Sad, melancholic sound.
+- Harmonic Minor: Classical, with a tense and dramatic feel.
+- Dorian: Jazzy and funky. A minor scale with a "hopeful" twist.
+- Mixolydian (7th): A blues and rock staple. A major scale with a flat 7th.
+- Major Pentatonic: Simple, open, and folksy. Used worldwide.
+- Minor Pentatonic: Versatile scale for blues, rock, and pop.
+- Blues: The authentic sound of blues, with its characteristic "blue note".`,
+            ja: `メロディーの音楽的な雰囲気を決定します。各スケールは独自の音の組み合わせです。
+・Major: 明るく、ハッピーな響き。
+・Natural Minor: 悲しく、メランコリックな響き。
+・Harmonic Minor: クラシカルで、少し緊張感のあるドラマチックな雰囲気。
+・Dorian: ジャジーでファンキー。希望を感じさせるようなマイナースケール。
+・Mixolydian (7th): ブルースやロックの定番。メジャースケールの7番目の音を半音下げたもの。
+・Major Pentatonic: シンプルで開放的、民謡のような響き。世界中で使われます。
+・Minor Pentatonic: ブルース、ロック、ポップスに最適な万能スケール。
+・Blues: 特徴的な「ブルーノート」を持つ、本物のブルースの響き。`
         }
     },
     algorithm: {
