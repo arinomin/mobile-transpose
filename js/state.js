@@ -16,8 +16,12 @@ export const BPM_MAX = 280;
 export const SCALES = {
     'major': [0, 2, 4, 5, 7, 9, 11],
     'minor': [0, 2, 3, 5, 7, 8, 10],
+    'harmonicMinor': [0, 2, 3, 5, 7, 8, 11],
+    'dorian': [0, 2, 3, 5, 7, 9, 10],
+    'mixolydian': [0, 2, 4, 5, 7, 9, 10],
     'majorPentatonic': [0, 2, 4, 7, 9],
-    'minorPentatonic': [0, 3, 5, 7, 10]
+    'minorPentatonic': [0, 3, 5, 7, 10],
+    'blues': [0, 3, 5, 6, 7, 10]
 };
 export const SHARE_FORMAT_VERSION = 'v5';
 export const RATES = [4, 3, 2, 1.5, 1, 0.5, 0.25];
