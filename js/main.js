@@ -337,9 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Step Modal Logic ---
     function openStepModal(stepIndex) {
-        const limit = state.pendingSeqMax !== null ? state.pendingSeqMax : state.seqMax;
-        if (stepIndex >= limit) return;
-
         if (state.isPlaying) stopPlayback();
         state.editedStepIndex = stepIndex;
         modalStepNumber.textContent = `#${stepIndex + 1}`;
