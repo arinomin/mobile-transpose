@@ -627,7 +627,14 @@ document.addEventListener('DOMContentLoaded', () => {
     bpmRateDisplayButton.addEventListener('click', openBpmRateModal);
     closeBpmRateModalButton.addEventListener('click', closeBpmRateModal);
     doneBpmRateButton.addEventListener('click', applyBpmRateChanges);
-    bpmRateModal.addEventListener('click', (e) => { if (e.target === bpmRateModal) closeBpmRateModal(); });
+    bpmRateModal.addEventListener('click', (e) => { 
+        if (e.target === bpmRateModal) {
+            closeBpmRateModal();
+        } else if (e.target.classList.contains('help-button')) {
+            const topic = e.target.dataset.helpTopic;
+            openHelpModal(topic);
+        }
+    });
 
     bpmDown10.addEventListener('click', () => adjustBpm(-10));
     bpmDown1.addEventListener('click', () => adjustBpm(-1));
@@ -646,7 +653,14 @@ document.addEventListener('DOMContentLoaded', () => {
     baseNoteDisplayButton.addEventListener('click', openBaseNoteModal);
     closeBaseNoteModalButton.addEventListener('click', closeBaseNoteModal);
     doneBaseNoteButton.addEventListener('click', applyBaseNoteChanges);
-    baseNoteModal.addEventListener('click', (e) => { if (e.target === baseNoteModal) closeBaseNoteModal(); });
+    baseNoteModal.addEventListener('click', (e) => { 
+        if (e.target === baseNoteModal) {
+            closeBaseNoteModal(); 
+        } else if (e.target.classList.contains('help-button')) {
+            const topic = e.target.dataset.helpTopic;
+            openHelpModal(topic);
+        }
+    });
 
     modalNoteNameButtons.addEventListener('click', (e) => {
         if (e.target.tagName === 'BUTTON') {

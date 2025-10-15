@@ -64,6 +64,26 @@ export const helpContent = {
             en: "The chance that a step will be a rest (silent). Higher values will result in more silence and a more sparse melody.",
             ja: "各ステップが休符（無音）になる確率です。値を高くすると、休符が増え、よりまばらなメロディーになります。"
         }
+    },
+    waveform: {
+        title: {
+            en: "Waveform",
+            ja: "波形"
+        },
+        content: {
+            en: "Determines the basic timbre of the sound. 'Sine' is pure and soft. 'Square' is bright and retro, like a video game. 'Saw' is rich and buzzy. 'Triangle' is mellow and flute-like.",
+            ja: "音の基本的な音色を決定します。「Sine」は純粋で柔らかい音、「Square」はビデオゲームのような明るくレトロな音、「Saw」は豊かで鋭い音、「Triangle」はまろやかでフルートのような音です。"
+        }
+    },
+    rate: {
+        title: {
+            en: "Rate",
+            ja: "レート"
+        },
+        content: {
+            en: "Sets the speed of the sequence relative to the BPM. '16分' (16th notes) is four notes per beat. '8分' (8th notes) is two notes per beat. '1拍3連' (Triplets) fits three notes into one beat.",
+            ja: "BPMに対するシーケンスの速さを設定します。「16分」は1拍に4つの音、「8分」は1拍に2つの音を演奏します。「1拍3連」は1拍の長さに3つの音を均等に配置します。"
+        }
     }
 };
 
