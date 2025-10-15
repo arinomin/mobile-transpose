@@ -12,7 +12,8 @@ import {
     SHARE_FORMAT_VERSION,
     RATES,
     WAVE_SERIALIZE_MAP,
-    WAVE_DESERIALIZE_MAP
+    WAVE_DESERIALIZE_MAP,
+    helpContent
 } from './state.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -71,6 +72,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const shareUrlInput = document.getElementById('share-url-input');
     const copyUrlButton = document.getElementById('copy-url-button');
     const shareXButton = document.getElementById('share-x-button');
+
+    const helpModal = document.getElementById('help-modal');
+    const closeHelpModalButton = document.getElementById('close-help-modal-button');
+    const helpModalTitle = document.getElementById('help-modal-title');
+    const helpModalContent = document.getElementById('help-modal-content');
+    const helpLanguageSwitcher = document.getElementById('help-language-switcher');
 
 
     // --- Web Audio API Initialization ---
@@ -554,6 +561,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- Help Modal Logic ---
+    let currentHelpTopic = '';
+    let currentLang = 'en';
+
+    function openHelpModal(topic) {
+        currentHelpTopic = topic;
+        updateHelpContent();
+        helpModal.style.display = 'flex';
+    }
+
+    function closeHelpModal() {
+        helpModal.style.display = 'none';
+    }
+
+    function updateHelpContent() {
+        if (!currentHelpTopic) return;
+        const topicContent = helpContent[currentHelpTopic];
+        helpModalTitle.textContent = topicContent.title[currentLang];
+        helpModalContent.textContent = topicContent.content[currentLang];
+
+        helpLanguageSwitcher.querySelector('.selected').classList.remove('selected');
+        helpLanguageSwitcher.querySelector(`[data-lang="${currentLang}"]`).classList.add('selected');
+    }
+
     // --- Share Modal Logic ---
     function openShareModal() {
         const dataString = serializeState();
@@ -642,7 +673,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     closeMelodyGenModalButton.addEventListener('click', closeMelodyGenModal);
-    melodyGenModal.addEventListener('click', (e) => { if (e.target === melodyGenModal) closeMelodyGenModal(); });
+    melodyGenModal.addEventListener('click', (e) => { 
+        if (e.target === melodyGenModal) {
+            closeMelodyGenModal(); 
+        } else if (e.target.classList.contains('help-button')) {
+            const topic = e.target.dataset.helpTopic;
+            openHelpModal(topic);
+        }
+    });
     previewMelodyButton.addEventListener('click', generateAndPreviewMelody);
     applyMelodyButton.addEventListener('click', applyMelody);
 
@@ -662,6 +700,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     shareModal.addEventListener('click', (e) => { if (e.target === shareModal) closeShareModal(); });
     closeShareModalButton.addEventListener('click', closeShareModal);
+
+    closeHelpModalButton.addEventListener('click', closeHelpModal);
+    helpModal.addEventListener('click', (e) => { if (e.target === helpModal) closeHelpModal(); });
+
+    helpLanguageSwitcher.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            currentLang = e.target.dataset.lang;
+            updateHelpContent();
+        }
+    });
 
     copyUrlButton.addEventListener('click', () => {
         navigator.clipboard.writeText(shareUrlInput.value).then(() => {

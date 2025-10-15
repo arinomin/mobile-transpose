@@ -164,7 +164,7 @@
             </div>
             <div class="modal-body">
                 <div class="melody-gen-control">
-                    <label for="melody-key-select">Key</label>
+                    <label for="melody-key-select">Key <button class="help-button" data-help-topic="key">?</button></label>
                     <select id="melody-key-select">
                         <option value="C">C</option>
                         <option value="C#">C#</option>
@@ -181,7 +181,7 @@
                     </select>
                 </div>
                 <div class="melody-gen-control">
-                    <label for="melody-scale-select">Scale</label>
+                    <label for="melody-scale-select">Scale <button class="help-button" data-help-topic="scale">?</button></label>
                     <select id="melody-scale-select">
                         <option value="major">Major</option>
                         <option value="minor">Natural Minor</option>
@@ -190,14 +190,14 @@
                     </select>
                 </div>
                 <div class="melody-gen-control">
-                    <label>Algorithm</label>
+                    <label>Algorithm <button class="help-button" data-help-topic="algorithm">?</button></label>
                     <div id="melody-algorithm-select" class="radio-group">
                         <button data-value="simple-walk" class="radio-button selected">Simple Walk</button>
                         <button data-value="leaps-and-rests" class="radio-button">Leaps & Rests</button>
                     </div>
                 </div>
                 <div class="melody-gen-control">
-                    <label for="melody-rest-probability">Rest Probability</label>
+                    <label for="melody-rest-probability">Rest Probability <button class="help-button" data-help-topic="rest-probability">?</button></label>
                     <div class="slider-container">
                         <input type="range" id="melody-rest-probability" min="0" max="0.8" step="0.1" value="0.2">
                         <span id="melody-rest-probability-value">20%</span>
@@ -223,6 +223,24 @@
                 <div class="share-buttons-container">
                     <button id="copy-url-button" class="action-button">URLをコピー</button>
                     <button id="share-x-button" class="action-button">Xで共有</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="help-modal-title"></h2>
+                <button id="close-help-modal-button" class="close-button">&times;</button>
+            </div>
+            <div class="modal-body" id="help-modal-content-body">
+                <p id="help-modal-content"></p>
+            </div>
+            <div class="modal-footer">
+                <div id="help-language-switcher" class="language-switcher">
+                    <button data-lang="en" class="lang-button selected">English</button>
+                    <button data-lang="ja" class="lang-button">日本語</button>
                 </div>
             </div>
         </div>

@@ -24,6 +24,49 @@ export const RATES = [4, 3, 2, 1.5, 1, 0.5, 0.25];
 export const WAVE_SERIALIZE_MAP = { 'sine': 's', 'square': 'q', 'sawtooth': 'w', 'triangle': 't' };
 export const WAVE_DESERIALIZE_MAP = { 's': 'sine', 'q': 'square', 'w': 'sawtooth', 't': 'triangle' };
 
+export const helpContent = {
+    key: {
+        title: {
+            en: "Key",
+            ja: "キー (調)"
+        },
+        content: {
+            en: "The root note of the scale used for melody generation. The generated melody will be centered around this key.",
+            ja: "メロディー生成の基準となるスケールのルート音です。生成されるメロディーはこのキーを中心に構成されます。"
+        }
+    },
+    scale: {
+        title: {
+            en: "Scale",
+            ja: "スケール (音階)"
+        },
+        content: {
+            en: "The set of notes that the melody generator will use. Different scales create different moods (e.g., Major for happy, Minor for sad).",
+            ja: "メロディー生成に使用される音のグループです。スケールによってメロディーの雰囲気（例：メジャーは明るい、マイナーは悲しい）が変わります。"
+        }
+    },
+    algorithm: {
+        title: {
+            en: "Algorithm",
+            ja: "アルゴリズム"
+        },
+        content: {
+            en: "'Simple Walk' creates a smooth melody by moving one step at a time. 'Leaps & Rests' creates a more dynamic melody with larger jumps and occasional silence.",
+            ja: "「Simple Walk」は一歩ずつ動く滑らかなメロディーを生成します。「Leaps & Rests」は大きな跳躍や時々の休符を伴う、よりダイナミックなメロディーを生成します。"
+        }
+    },
+    'rest-probability': {
+        title: {
+            en: "Rest Probability",
+            ja: "休符の確率"
+        },
+        content: {
+            en: "The chance that a step will be a rest (silent). Higher values will result in more silence and a more sparse melody.",
+            ja: "各ステップが休符（無音）になる確率です。値を高くすると、休符が増え、よりまばらなメロディーになります。"
+        }
+    }
+};
+
 
 export const state = {
     audioContext: null,
