@@ -499,7 +499,9 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let octave = -octaveRange; octave <= octaveRange; octave++) {
             for (const interval of scaleIntervals) {
                 const midiNote = rootNoteIndex + (state.baseOctave + octave) * 12 + interval;
-                transposePool.push(midiNote - baseMidi);
+                const transposeValue = midiNote - baseMidi;
+                const clampedTranspose = Math.max(-12, Math.min(12, transposeValue));
+                transposePool.push(clampedTranspose);
             }
         }
         const uniqueTransposes = [...new Set(transposePool)].sort((a, b) => a - b);
