@@ -1,7 +1,6 @@
 import {
     state,
     STEPS_COUNT,
-    NOTE_NAMES,
     OCTAVES,
     WAVEFORMS,
     MAJOR_TICKS,
@@ -9,10 +8,12 @@ import {
     BPM_MIN,
     BPM_MAX,
     SCALES,
-    helpContent
+    helpContent,
+    NOTE_NAMES
 } from './state.js';
 
-import { getNoteName, playAuditionSound, startPlayback, stopPlayback } from './audio.js';
+import { playAuditionSound, startPlayback, stopPlayback } from './audio.js';
+import { noteToMidi, getNoteName, formatTranspose } from './utils.js';
 
 // --- DOM Elements ---
 export const domElements = {
@@ -74,10 +75,6 @@ export const domElements = {
 };
 
 // --- UI Update ---
-function formatTranspose(transpose) {
-    return transpose >= 0 ? `+${transpose}` : transpose;
-}
-
 export function updateStepUI(index, stepData) {
     const stepElement = domElements.sequencerGrid.children[index];
     stepElement.querySelector('.step-transpose').textContent = formatTranspose(stepData.transpose);
@@ -417,9 +414,4 @@ export function createModalWaveformButtons() {
         button.dataset.wave = waveValue;
         domElements.modalWaveformButtons.appendChild(button);
     }
-}
-
-function noteToMidi(note, octave) {
-    const noteIndex = NOTE_NAMES.indexOf(note);
-    return noteIndex + (octave + 1) * 12;
 }

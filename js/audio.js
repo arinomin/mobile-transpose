@@ -1,28 +1,12 @@
 import {
     state,
-    NOTE_NAMES,
     WAVEFORMS, 
     STEPS_COUNT
 } from './state.js';
+import { noteToMidi, midiToFreq } from './utils.js';
 
 // --- DOM Elements (passed from main.js) ---
 let domElements = {};
-
-// --- Note and Frequency Calculation ---
-function noteToMidi(note, octave) {
-    const noteIndex = NOTE_NAMES.indexOf(note);
-    return noteIndex + (octave + 1) * 12;
-}
-
-function midiToFreq(midi) {
-    return 440 * Math.pow(2, (midi - 69) / 12);
-}
-
-export function getNoteName(midi) {
-    const octave = Math.floor(midi / 12) - 1;
-    const noteIndex = midi % 12;
-    return NOTE_NAMES[noteIndex] + octave;
-}
 
 // --- Sound Playback ---
 function playNote(midiNote, startTime, duration) {
