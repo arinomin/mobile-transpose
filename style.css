@@ -863,6 +863,9 @@ input:checked + .slider:before {
 #help-modal-content-body {
     text-align: left;
     line-height: 1.6;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 16px; /* Add some padding for the scrollbar */
 }
 
 #help-modal-content {
