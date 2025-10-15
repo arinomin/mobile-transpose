@@ -38,16 +38,28 @@ body {
     text-align: center;
 }
 
-.container-inner {
-    width: 100%;
+.header-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 24px;
     max-width: 500px;
-    text-align: center;
-    margin: 0 auto;
+    position: relative;
 }
 
 h1 {
     color: var(--accent-color);
-    margin-bottom: 24px;
+    margin: 0;
+    text-align: center;
+}
+
+.header-help-button {
+    position: absolute;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    font-size: 1.2em;
+    line-height: 30px;
 }
 
 /* --- Generic Controls --- */
@@ -851,4 +863,8 @@ input:checked + .slider:before {
 #help-modal-content-body {
     text-align: left;
     line-height: 1.6;
+}
+
+#help-modal-content {
+    white-space: pre-wrap;
 }

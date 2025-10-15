@@ -84,6 +84,16 @@ export const helpContent = {
             en: "Sets the speed of the sequence relative to the BPM. '16分' (16th notes) is four notes per beat. '8分' (8th notes) is two notes per beat. '1拍3連' (Triplets) fits three notes into one beat.",
             ja: "BPMに対するシーケンスの速さを設定します。「16分」は1拍に4つの音、「8分」は1拍に2つの音を演奏します。「1拍3連」は1拍の長さに3つの音を均等に配置します。"
         }
+    },
+    general: {
+        title: {
+            en: "How to Use",
+            ja: "基本的な使い方"
+        },
+        content: {
+            en: `This is a 16-step sequencer.\n\n- Sequencer Grid: Click a step to edit its pitch. Drag and drop to swap step positions.\n- Global Controls: Tap 'Base Note' or 'BPM / Rate' to change the overall sound and tempo.\n- Footer Menu: Generate new melodies, Play/Stop the sequence, or Share your creation with a URL.`,
+            ja: `このアプリは16ステップのシーケンサーです。\n\n・シーケンサーグリッド: 各ステップをクリックすると音程を編集できます。ドラッグ＆ドロップすると、ステップの位置を入れ替えられます。\n・グローバルコントロール: 「Base Note」や「BPM / Rate」をタップすると、全体のサウンドやテンポを変更できます。\n・フッターメニュー: 新しいメロディーを生成したり、再生/停止、URLでの共有ができます。`
+        }
     }
 };
 

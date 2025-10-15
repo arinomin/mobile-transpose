@@ -18,6 +18,7 @@ import {
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
+    const headerContainer = document.querySelector('.header-container');
     const seqMaxButtonsContainer = document.getElementById('seq-max-buttons');
     const sequencerGrid = document.getElementById('sequencer-grid');
     const stepModal = document.getElementById('step-modal');
@@ -722,6 +723,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.tagName === 'BUTTON') {
             currentLang = e.target.dataset.lang;
             updateHelpContent();
+        }
+    });
+
+    headerContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('help-button')) {
+            const topic = e.target.dataset.helpTopic;
+            openHelpModal(topic);
         }
     });
 
