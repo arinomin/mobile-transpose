@@ -1,12 +1,6 @@
-import {
-    state,
-    WAVEFORMS, 
-    STEPS_COUNT
-} from './state.js';
+import { state, STEPS_COUNT } from './state.js';
 import { noteToMidi, midiToFreq } from './utils.js';
-
-// --- DOM Elements (passed from main.js) ---
-let domElements = {};
+import { updatePlayButtons, updateDisabledStepsUI, drawPlayback, domElements } from './ui.js';
 
 // --- Sound Playback ---
 function playNote(midiNote, startTime, duration) {
@@ -35,65 +29,62 @@ function playNote(midiNote, startTime, duration) {
 
 export function playAuditionSound(midiNote, duration = 0.4) {
     initAudio();
+    if (!state.audioContext) return;
     const now = state.audioContext.currentTime;
     playNote(midiNote, now, duration);
 }
 
-// --- Unified Sequencer Logic ---
+// --- Sequencer Engine ---
 function nextNote() {
     const secondsPerBeat = 60.0 / state.bpm;
-    const noteDurationInBeats = 4.0 / state.rate;
-    state.nextNoteTime += (noteDurationInBeats * secondsPerBeat) / 4;
-    
-    const loop = state.playbackMode === 'main';
+    // How many beats each step lasts
+    const noteDurationInBeats = 4.0 / state.rate; 
+    // How many quarter notes per step
+    const quarterNotesPerStep = noteDurationInBeats / 4.0;
+    state.nextNoteTime += quarterNotesPerStep * secondsPerBeat;
+
+    const isLooping = state.playbackMode === 'main';
     let sequenceLength = state.seqMax;
 
-    if (loop && state.currentStep === sequenceLength - 1) {
+    // Handle seamless sequence length changes
+    if (isLooping && state.currentStep === sequenceLength - 1) {
         if (state.pendingSeqMax !== null) {
             state.seqMax = state.pendingSeqMax;
             state.pendingSeqMax = null;
             sequenceLength = state.seqMax;
-            // This update needs to be handled in the UI module
-            requestAnimationFrame(() => domElements.updateDisabledStepsUI()); 
+            requestAnimationFrame(updateDisabledStepsUI);
         }
     }
 
-    if (loop) {
-        state.currentStep = (state.currentStep + 1) % sequenceLength;
-    } else {
-        state.currentStep++;
-    }
+    state.currentStep = isLooping ? (state.currentStep + 1) % sequenceLength : state.currentStep + 1;
 }
 
 function scheduleNote(stepNumber, time) {
     const isPreview = state.playbackMode === 'preview';
     const sequence = isPreview ? state.previewSteps : state.steps;
-    if (!sequence) return;
+    if (!sequence || !sequence[stepNumber]) return;
 
-    if (stepNumber >= state.seqMax && state.playbackMode === 'main') return;
+    // In main mode, don't schedule notes beyond the current sequence length
+    if (!isPreview && stepNumber >= state.seqMax) return;
 
     const stepData = sequence[stepNumber];
-    if (!stepData.enabled) {
-        state.notesInQueue.push({ note: stepNumber, time: time, isPreview: isPreview, isDisabled: true });
-        return; // Do not play disabled steps
+    state.notesInQueue.push({ note: stepNumber, time: time, isPreview: isPreview, isDisabled: !stepData.enabled });
+
+    if (stepData.enabled) {
+        const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
+        const finalMidi = baseMidi + stepData.transpose;
+        const noteDuration = (60.0 / state.bpm) / state.rate;
+        playNote(finalMidi, time, noteDuration);
     }
-
-    state.notesInQueue.push({ note: stepNumber, time: time, isPreview: isPreview });
-
-    const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
-    const finalMidi = baseMidi + stepData.transpose;
-    const noteDuration = (60.0 / state.bpm) / state.rate;
-
-    playNote(finalMidi, time, noteDuration);
 }
 
 function scheduler() {
-    const loop = state.playbackMode === 'main';
-    const currentSequenceLength = state.seqMax;
+    const isPreview = state.playbackMode === 'preview';
+    const sequenceLength = isPreview ? STEPS_COUNT : state.seqMax;
 
     while (state.nextNoteTime < state.audioContext.currentTime + state.scheduleAheadTime) {
-        if (!loop && state.currentStep >= currentSequenceLength) {
-            stopPlayback();
+        if (state.playbackMode !== 'main' && state.currentStep >= sequenceLength) {
+            stopPlayback(); // Stop if it's a one-shot playback that has ended
             break;
         }
         scheduleNote(state.currentStep, state.nextNoteTime);
@@ -105,53 +96,25 @@ function scheduler() {
     }
 }
 
-function draw() {
-    let drawStepInfo = null;
-    const currentTime = state.audioContext.currentTime;
-
-    while (state.notesInQueue.length && state.notesInQueue[0].time < currentTime) {
-        drawStepInfo = state.notesInQueue.shift();
-    }
-
-    if (drawStepInfo) {
-        const lastStepEl = domElements.sequencerGrid.querySelector('.active, .active-preview');
-        if (lastStepEl) {
-            lastStepEl.classList.remove('active', 'active-preview');
-        }
-
-        if (drawStepInfo.note < state.seqMax || drawStepInfo.isPreview) {
-            const newStepEl = domElements.sequencerGrid.children[drawStepInfo.note];
-            if (newStepEl && !drawStepInfo.isDisabled) { // Only highlight if not disabled
-                newStepEl.classList.add(drawStepInfo.isPreview ? 'active-preview' : 'active');
-            }
-        }
-        state.lastStepDrawn = drawStepInfo.note;
-    }
-    
-    if (state.isPlaying) {
-        requestAnimationFrame(draw);
-    }
-}
-
-export function startPlayback(mode = 'main', sequence = null) {
+export function startPlayback(mode = 'main') {
     initAudio();
-    if (state.isPlaying) stopPlayback();
+    if (!state.audioContext || state.isPlaying) return;
 
     state.playbackMode = mode;
     state.isPlaying = true;
     
-    if (mode === 'preview') {
-        state.previewSteps = sequence;
+    const isPreview = mode === 'preview';
+    if (isPreview) {
         domElements.previewMelodyButton.disabled = true;
         domElements.applyMelodyButton.disabled = true;
     } else {
-        domElements.updatePlayButtons(true);
+        updatePlayButtons(true);
     }
 
     state.currentStep = 0;
-    state.nextNoteTime = state.audioContext.currentTime + 0.1;
+    state.nextNoteTime = state.audioContext.currentTime + 0.1; // Start scheduling slightly ahead
     scheduler();
-    requestAnimationFrame(draw);
+    requestAnimationFrame(drawPlayback);
 }
 
 export function stopPlayback() {
@@ -159,16 +122,19 @@ export function stopPlayback() {
     
     const wasPreview = state.playbackMode === 'preview';
     state.isPlaying = false;
+    state.playbackMode = 'main'; // Reset to main
 
     clearTimeout(state.schedulerTimerId);
     state.schedulerTimerId = null;
     
+    // If a sequence length change was pending, apply it now
     if (state.pendingSeqMax !== null) {
         state.seqMax = state.pendingSeqMax;
         state.pendingSeqMax = null;
-        domElements.updateDisabledStepsUI();
+        updateDisabledStepsUI();
     }
 
+    // Clear any scheduled notes
     state.notesInQueue = [];
     const activeStepEl = domElements.sequencerGrid.querySelector('.active, .active-preview');
     if (activeStepEl) {
@@ -176,20 +142,24 @@ export function stopPlayback() {
     }
     state.lastStepDrawn = -1;
 
+    // Gentle fade out to prevent clicks
     if (state.audioContext) {
-        state.masterGainNode.gain.cancelScheduledValues(state.audioContext.currentTime);
-        state.masterGainNode.gain.setValueAtTime(state.masterGainNode.gain.value, state.audioContext.currentTime);
-        state.masterGainNode.gain.linearRampToValueAtTime(0.0, state.audioContext.currentTime + 0.05);
-        state.masterGainNode.gain.linearRampToValueAtTime(1.0, state.audioContext.currentTime + 0.1);
+        const now = state.audioContext.currentTime;
+        state.masterGainNode.gain.cancelScheduledValues(now);
+        state.masterGainNode.gain.setValueAtTime(state.masterGainNode.gain.value, now);
+        state.masterGainNode.gain.linearRampToValueAtTime(0.0, now + 0.05);
+        // Restore gain for next playback
+        state.masterGainNode.gain.linearRampToValueAtTime(1.0, now + 0.1);
     }
 
     state.currentStep = 0;
 
+    // Update UI state
     if (wasPreview) {
         domElements.previewMelodyButton.disabled = false;
         domElements.applyMelodyButton.disabled = state.previewSteps === null;
     } else {
-        domElements.updatePlayButtons(false);
+        updatePlayButtons(false);
     }
 }
 
@@ -203,8 +173,4 @@ export function initAudio() {
     } catch (e) {
         alert('Web Audio API is not supported in this browser.');
     }
-}
-
-export function initAudioModule(elements) {
-    domElements = elements;
 }

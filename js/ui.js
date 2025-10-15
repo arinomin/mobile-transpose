@@ -7,13 +7,11 @@ import {
     INTERVAL_NAMES,
     BPM_MIN,
     BPM_MAX,
-    SCALES,
     helpContent,
     NOTE_NAMES
 } from './state.js';
-
-import { playAuditionSound, startPlayback, stopPlayback } from './audio.js';
 import { noteToMidi, getNoteName, formatTranspose } from './utils.js';
+import * as actions from './actions.js';
 
 // --- DOM Elements ---
 export const domElements = {
@@ -61,7 +59,7 @@ export const domElements = {
     melodyRestProbability: document.getElementById('melody-rest-probability'),
     melodyRestProbabilityValue: document.getElementById('melody-rest-probability-value'),
     shareModal: document.getElementById('share-modal'),
-    closeShareModalButton: document.getElementById('close-share-modal-button'),
+    closeShareModalButton: document('close-share-modal-button'),
     shareUrlInput: document.getElementById('share-url-input'),
     copyUrlButton: document.getElementById('copy-url-button'),
     shareXButton: document.getElementById('share-x-button'),
@@ -69,14 +67,13 @@ export const domElements = {
     closeHelpModalButton: document.getElementById('close-help-modal-button'),
     helpModalTitle: document.getElementById('help-modal-title'),
     helpModalContent: document.getElementById('help-modal-content'),
-    helpLanguageSwitcher: document.getElementById('help-language-switcher'),
-    updatePlayButtons: updatePlayButtons, // Add function references that audio module needs
-    updateDisabledStepsUI: updateDisabledStepsUI
+    helpLanguageSwitcher: document.getElementById('help-language-switcher')
 };
 
 // --- UI Update ---
 export function updateStepUI(index, stepData) {
     const stepElement = domElements.sequencerGrid.children[index];
+    if (!stepElement) return;
     stepElement.querySelector('.step-transpose').textContent = formatTranspose(stepData.transpose);
     const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
     const finalMidi = baseMidi + stepData.transpose;
@@ -85,7 +82,7 @@ export function updateStepUI(index, stepData) {
 }
 
 export function updateAllStepsUI() {
-    const sequence = state.playbackMode === 'preview' && state.previewSteps ? state.previewSteps : state.steps;
+    const sequence = state.previewSteps ? state.previewSteps : state.steps;
     for (let i = 0; i < STEPS_COUNT; i++) {
         const stepData = sequence[i] || { transpose: 0, enabled: true };
         updateStepUI(i, stepData);
@@ -106,16 +103,48 @@ export function updateBaseNoteDisplay() {
     domElements.baseNoteDisplayButton.textContent = `${state.baseNote}${state.baseOctave} / ${waveText.toUpperCase()}`;
 }
 
-function updatePlayButtons(playing) {
+export function updatePlayButtons(playing) {
     if (domElements.playStopBtn) domElements.playStopBtn.classList.toggle('playing', playing);
 }
+
+// --- Playback Visuals ---
+export function drawPlayback() {
+    let drawStepInfo = null;
+    const currentTime = state.audioContext.currentTime;
+
+    while (state.notesInQueue.length && state.notesInQueue[0].time < currentTime) {
+        drawStepInfo = state.notesInQueue.shift();
+    }
+
+    if (drawStepInfo) {
+        const lastStepEl = domElements.sequencerGrid.querySelector('.active, .active-preview');
+        if (lastStepEl) {
+            lastStepEl.classList.remove('active', 'active-preview');
+        }
+
+        const isPreview = drawStepInfo.isPreview;
+        const limit = isPreview ? STEPS_COUNT : state.seqMax;
+
+        if (drawStepInfo.note < limit) {
+            const newStepEl = domElements.sequencerGrid.children[drawStepInfo.note];
+            if (newStepEl && !drawStepInfo.isDisabled) { // Only highlight if not disabled
+                newStepEl.classList.add(isPreview ? 'active-preview' : 'active');
+            }
+        }
+        state.lastStepDrawn = drawStepInfo.note;
+    }
+    
+    if (state.isPlaying) {
+        requestAnimationFrame(drawPlayback);
+    }
+}
+
 
 // --- Modal Logic ---
 export function openStepModal(stepIndex) {
     const limit = state.pendingSeqMax !== null ? state.pendingSeqMax : state.seqMax;
     if (stepIndex >= limit) return;
 
-    if (state.isPlaying) stopPlayback();
     state.editedStepIndex = stepIndex;
     domElements.modalStepNumber.textContent = `#${stepIndex + 1}`;
     const stepData = state.steps[stepIndex];
@@ -124,12 +153,6 @@ export function openStepModal(stepIndex) {
     const toggle = document.getElementById('step-enable-toggle');
     if (toggle) {
         toggle.checked = stepData.enabled;
-        toggle.onchange = (e) => {
-            if (state.editedStepIndex !== null) {
-                state.steps[state.editedStepIndex].enabled = e.target.checked;
-                updateStepUI(state.editedStepIndex, state.steps[state.editedStepIndex]);
-            }
-        };
     }
 
     domElements.stepModal.style.display = 'flex';
@@ -137,9 +160,10 @@ export function openStepModal(stepIndex) {
 
 export function closeStepModal() {
     domElements.stepModal.style.display = 'none';
+    state.editedStepIndex = null;
 }
 
-export function updateStepModalInfo(transpose, save = false) {
+export function updateStepModalInfo(transpose) {
     domElements.transposeValueDisplay.textContent = formatTranspose(transpose);
     domElements.intervalNameDisplay.textContent = INTERVAL_NAMES[transpose] || '';
     const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
@@ -149,14 +173,13 @@ export function updateStepModalInfo(transpose, save = false) {
     const percentage = (transpose + 12) / 24;
     handle.style.left = `${percentage * 100}%`;
 
-    if (save) {
-        state.steps[state.editedStepIndex].transpose = transpose;
-        updateStepUI(state.editedStepIndex, state.steps[state.editedStepIndex]);
+    // Live update the main grid as the selector is dragged
+    if (state.editedStepIndex !== null) {
+        actions.setStepTranspose(state.editedStepIndex, transpose);
     }
 }
 
 export function openBpmRateModal() {
-    if (state.isPlaying) stopPlayback();
     state.modalBpm = state.bpm;
     state.modalRate = state.rate;
     domElements.modalBpmValue.textContent = state.modalBpm;
@@ -176,20 +199,7 @@ export function closeBpmRateModal() {
     domElements.bpmRateModal.style.display = 'none';
 }
 
-export function applyBpmRateChanges() {
-    state.bpm = state.modalBpm;
-    state.rate = state.modalRate;
-    domElements.bpmRateDisplayButton.textContent = `${state.bpm} / ${state.modalRateText}`;
-    closeBpmRateModal();
-}
-
-export function adjustBpm(amount) {
-    state.modalBpm = Math.max(BPM_MIN, Math.min(BPM_MAX, state.modalBpm + amount));
-    domElements.modalBpmValue.textContent = state.modalBpm;
-}
-
 export function openBaseNoteModal() {
-    if (state.isPlaying) stopPlayback();
     state.modalBaseNote = state.baseNote;
     state.modalBaseOctave = state.baseOctave;
     state.modalWaveform = state.waveform;
@@ -211,103 +221,19 @@ export function closeBaseNoteModal() {
     domElements.baseNoteModal.style.display = 'none';
 }
 
-export function applyBaseNoteChanges() {
-    state.baseNote = state.modalBaseNote;
-    state.baseOctave = state.modalBaseOctave;
-    state.waveform = state.modalWaveform;
-    updateBaseNoteDisplay();
-    updateAllStepsUI();
-    closeBaseNoteModal();
-}
-
 export function openMelodyGenModal() {
-    if (state.isPlaying) stopPlayback();
-    state.previewSteps = null;
+    actions.clearPreviewMelody();
     domElements.applyMelodyButton.disabled = true;
     domElements.melodyGenModal.style.display = 'flex';
 }
 
 export function closeMelodyGenModal() {
-    if (state.isPlaying) stopPlayback();
-    state.previewSteps = null;
-    updateAllStepsUI();
+    actions.clearPreviewMelody();
     domElements.melodyGenModal.style.display = 'none';
 }
 
-export function generateAndPreviewMelody() {
-    const key = domElements.melodyKeySelect.value;
-    const scaleName = domElements.melodyScaleSelect.value;
-    const scaleIntervals = SCALES[scaleName];
-
-    const rootNoteIndex = NOTE_NAMES.indexOf(key);
-    const baseMidi = noteToMidi(state.baseNote, state.baseOctave);
-
-    const transposePool = [];
-    const octaveRange = state.melodyGenAlgorithm === 'leaps-and-rests' ? 2 : 1;
-    for (let octave = -octaveRange; octave <= octaveRange; octave++) {
-        for (const interval of scaleIntervals) {
-            const midiNote = rootNoteIndex + (state.baseOctave + octave) * 12 + interval;
-            transposePool.push(midiNote - baseMidi);
-        }
-    }
-    const uniqueTransposes = [...new Set(transposePool)].sort((a, b) => a - b);
-
-    let currentIndex = uniqueTransposes.indexOf(
-        uniqueTransposes.reduce((prev, curr) => Math.abs(curr) < Math.abs(prev) ? curr : prev, Infinity)
-    );
-
-    const newMelody = [];
-    for (let i = 0; i < STEPS_COUNT; i++) {
-        const isRest = Math.random() < state.melodyGenRestProbability;
-        if (isRest) {
-            newMelody.push({ transpose: uniqueTransposes[currentIndex], enabled: false });
-        } else {
-            newMelody.push({ transpose: uniqueTransposes[currentIndex], enabled: true });
-
-            if (state.melodyGenAlgorithm === 'simple-walk') {
-                const randomChoice = Math.random();
-                if (randomChoice < 0.2) { 
-                } else if (randomChoice < 0.6) {
-                    currentIndex = Math.min(uniqueTransposes.length - 1, currentIndex + 1);
-                } else {
-                    currentIndex = Math.max(0, currentIndex - 1);
-                }
-            } else { 
-                const randomChoice = Math.random();
-                let nextIndex;
-                if (randomChoice < 0.5) {
-                    const direction = Math.random() < 0.5 ? -1 : 1;
-                    nextIndex = currentIndex + direction;
-                } else {
-                    const leapSize = Math.floor(Math.random() * 4) + 2;
-                    const direction = Math.random() < 0.5 ? -1 : 1;
-                    nextIndex = currentIndex + (leapSize * direction);
-                }
-                currentIndex = Math.max(0, Math.min(uniqueTransposes.length - 1, nextIndex));
-            }
-        }
-    }
-
-    state.previewSteps = newMelody;
-    domElements.applyMelodyButton.disabled = false;
-    
-    for (let i = 0; i < STEPS_COUNT; i++) {
-        updateStepUI(i, state.previewSteps[i]);
-    }
-
-    startPlayback('preview', newMelody);
-}
-
-export function applyMelody() {
-    if (state.previewSteps) {
-        state.steps = JSON.parse(JSON.stringify(state.previewSteps));
-        updateAllStepsUI();
-        closeMelodyGenModal();
-    }
-}
-
 let currentHelpTopic = '';
-let currentLang = 'en';
+let currentLang = 'ja';
 
 export function openHelpModal(topic) {
     currentHelpTopic = topic;
@@ -319,19 +245,29 @@ export function closeHelpModal() {
     domElements.helpModal.style.display = 'none';
 }
 
+export function setHelpLanguage(lang) {
+    currentLang = lang;
+    updateHelpContent();
+}
+
 function updateHelpContent() {
     if (!currentHelpTopic) return;
     const topicContent = helpContent[currentHelpTopic];
-    domElements.helpModalTitle.textContent = topicContent.title[currentLang];
-    domElements.helpModalContent.textContent = topicContent.content[currentLang];
+    if (!topicContent) return;
 
-    domElements.helpLanguageSwitcher.querySelector('.selected').classList.remove('selected');
-    domElements.helpLanguageSwitcher.querySelector(`[data-lang="${currentLang}"]`).classList.add('selected');
+    domElements.helpModalTitle.textContent = topicContent.title[currentLang] || topicContent.title['en'];
+    domElements.helpModalContent.textContent = topicContent.content[currentLang] || topicContent.content['en'];
+
+    const switcher = domElements.helpLanguageSwitcher;
+    if (switcher.querySelector('.selected')) {
+        switcher.querySelector('.selected').classList.remove('selected');
+    }
+    if (switcher.querySelector(`[data-lang="${currentLang}"]`)) {
+        switcher.querySelector(`[data-lang="${currentLang}"]`).classList.add('selected');
+    }
 }
 
 export function openShareModal() {
-    // serializeState will be in main.js
-    // This function needs to be passed the serialized string
     domElements.shareModal.style.display = 'flex';
 }
 
