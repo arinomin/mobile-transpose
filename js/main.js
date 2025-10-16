@@ -960,6 +960,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const dataString = decodeURIComponent(window.location.hash.substring(1));
+            if (!dataString) return;
             
             const version = dataString.substring(0, 2);
             if (version !== 'v5') {
