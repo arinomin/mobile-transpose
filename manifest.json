@@ -1,6 +1,6 @@
 {
   "name": "mobile-transpose",
-  "short_name": "Mobile-Transpose",
+  "short_name": "Transpose",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#1a1a1a",
