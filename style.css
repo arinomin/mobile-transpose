@@ -874,7 +874,6 @@ input:checked + .slider:before {
     flex-shrink: 0;
     text-align: center;
     padding: 20px 16px;
-    padding-bottom: calc(var(--footer-height) + 20px);
     font-size: 0.85em;
     color: rgba(240, 240, 240, 0.5);
     line-height: 1.5;
