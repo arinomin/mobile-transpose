@@ -45,7 +45,7 @@ export const helpContent = {
             ja: "スケール (音階)"
         },
         content: {
-            en: `Determines the musical mood. Each scale is a unique set of notes.\n\n- Major -\nHappy, bright, and cheerful sound.\n\n- Natural Minor -\nSad, melancholic, and emotional sound.\n\n- Harmonic Minor -\nClassical and dramatic, with a tense, exotic feel due to the raised 7th note.\n\n- Dorian -\nJazzy and funky. A minor scale with a "hopeful" twist from its major 6th note.\n\n- Mixolydian (7th) -\nA staple of blues and rock. A major scale with a flat 7th, giving it a "dominant" sound.\n\n- Major Pentatonic -\nSimple, open, and folksy. Used in music from many cultures around the world.\n\n- Minor Pentatonic -\nA highly versatile scale, fundamental to blues, rock, and pop music.\n\n- Blues -\nContains the characteristic "blue notes" (e.g., minor 3rd, diminished 5th) which create the signature, soulful sound of blues music.`,
+            en: `Determines the musical mood. Each scale is a unique set of notes.\n\n- Major -\nHappy, bright, and cheerful sound.\n\n- Natural Minor -\nSad, melancholic, and emotional sound.\n\n- Harmonic Minor -\nClassical and dramatic, with a tense, exotic feel due to the raised 7th note.\n\n- Dorian -\nJazzy and funky. A minor scale with a \"hopeful\" twist from its major 6th note.\n\n- Mixolydian (7th) -\nA staple of blues and rock. A major scale with a flat 7th, giving it a \"dominant\" sound.\n\n- Major Pentatonic -\nSimple, open, and folksy. Used in music from many cultures around the world.\n\n- Minor Pentatonic -\nA highly versatile scale, fundamental to blues, rock, and pop music.\n\n- Blues -\nContains the characteristic \"blue notes\" (e.g., minor 3rd, diminished 5th) which create the signature, soulful sound of blues music.`,
             ja: `メロディーの音楽的な雰囲気を決定します。各スケールは独自の音の組み合わせです。\n\n- Major (メジャー) -\n明るく、ハッピーで陽気な響きです。\n\n- Natural Minor (ナチュラルマイナー) -\n悲しく、メランコリックで感情的な響きです。\n\n- Harmonic Minor (ハーモニックマイナー) -\n7番目の音を上げたことで生まれる、クラシカルでドラマチック、少しエキゾチックな緊張感のある響きです。\n\n- Dorian (ドリアン) -\nジャジーでファンキー。6番目の音がメジャーになっているため、マイナースケールでありながら「希望」を感じさせる独特の雰囲気を持っています。\n\n- Mixolydian (7th) (ミクソリディアン) -\nブルースやロックの定番。メジャースケールの7番目の音を半音下げたもので、「ドミナント」な響きを持ちます。\n\n- Major Pentatonic (メジャーペンタトニック) -\nシンプルで開放的、民謡のような響き。世界中の多くの文化の音楽で使われています。\n\n- Minor Pentatonic (マイナーペンタトニック) -\nブルース、ロック、ポップスに不可欠な、非常に用途の広いスケールです。\n\n- Blues (ブルース) -\n「ブルーノート」（短3度や減5度など）と呼ばれる特徴的な音を含み、ブルース音楽特有のソウルフルなサウンドを生み出します。`
         }
     },
@@ -76,7 +76,7 @@ export const helpContent = {
         },
         content: {
             en: "Determines the basic timbre of the sound. 'Sine' is pure and soft. 'Square' is bright and retro, like a video game. 'Saw' is rich and buzzy. 'Triangle' is mellow and flute-like.",
-            ja: "音の基本的な音色を決定します。「Sine」は純粋で柔らかい音、「Square」はビデオゲームのような明るくレトロな音、「Saw」は豊かで鋭い音、「Triangle」はまろやかでフルートのような音です。"
+            ja: "音の基本的な音色を決定します。「Sine」は純粋で柔らかい音。「Square」はビデオゲームのような明るくレトロな音。「Saw」は豊かで鋭い音。「Triangle」はまろやかでフルートのような音です。"
         }
     },
     rate: {
