@@ -46,7 +46,7 @@ export const helpContent = {
         },
         content: {
             en: `Determines the musical mood. Each scale is a unique set of notes.\n\n- Major -\nHappy, bright, and cheerful sound.\n\n- Natural Minor -\nSad, melancholic, and emotional sound.\n\n- Harmonic Minor -\nClassical and dramatic, with a tense, exotic feel due to the raised 7th note.\n\n- Dorian -\nJazzy and funky. A minor scale with a \"hopeful\" twist from its major 6th note.\n\n- Mixolydian (7th) -\nA staple of blues and rock. A major scale with a flat 7th, giving it a \"dominant\" sound.\n\n- Major Pentatonic -\nSimple, open, and folksy. Used in music from many cultures around the world.\n\n- Minor Pentatonic -\nA highly versatile scale, fundamental to blues, rock, and pop music.\n\n- Blues -\nContains the characteristic \"blue notes\" (e.g., minor 3rd, diminished 5th) which create the signature, soulful sound of blues music.`,
-            ja: `メロディーの音楽的な雰囲気を決定します。各スケールは独自の音の組み合わせです。\n\n- Major (メジャー) -\n明るく、ハッピーで陽気な響きです。\n\n- Natural Minor (ナチュラルマイナー) -\n悲しく、メランコリックで感情的な響きです。\n\n- Harmonic Minor (ハーモニックマイナー) -\n7番目の音を上げたことで生まれる、クラシカルでドラマチック、少しエキゾチックな緊張感のある響きです。\n\n- Dorian (ドリアン) -\nジャジーでファンキー。6番目の音がメジャーになっているため、マイナースケールでありながら「希望」を感じさせる独特の雰囲気を持っています。\n\n- Mixolydian (7th) (ミクソリディアン) -\nブルースやロックの定番。メジャースケールの7番目の音を半音下げたもので、「ドミナント」な響きを持ちます。\n\n- Major Pentatonic (メジャーペンタトニック) -\nシンプルで開放的、民謡のような響き。世界中の多くの文化の音楽で使われています。\n\n- Minor Pentatonic (マイナーペンタトニック) -\nブルース、ロック、ポップスに不可欠な、非常に用途の広いスケールです。\n\n- Blues (ブルース) -\n「ブルーノート」（短3度や減5度など）と呼ばれる特徴的な音を含み、ブルース音楽特有のソウルフルなサウンドを生み出します。`
+            ja: `メロディーの音楽的な雰囲気を決定します。各スケールは独自の音の組み合わせです。\n\n- メジャー -\n明るく、ハッピーで陽気な響きです。\n\n- ナチュラルマイナー -\n悲しく、メランコリックで感情的な響きです。\n\n- ハーモニックマイナー -\n7番目の音を上げたことで生まれる、クラシカルでドラマチック、少しエキゾチックな緊張感のある響きです。\n\n- ドリアン -\nジャジーでファンキー。6番目の音がメジャーになっているため、マイナースケールでありながら「希望」を感じさせる独特の雰囲気を持っています。\n\n- ミクソリディアン (7th) -\nブルースやロックの定番。メジャースケールの7番目の音を半音下げたもので、「ドミナント」な響きを持ちます。\n\n- メジャーペンタトニック -\nシンプルで開放的、民謡のような響き。世界中の多くの文化の音楽で使われています。\n\n- マイナーペンタトニック -\nブルース、ロック、ポップスに不可欠な、非常に用途の広いスケールです。\n\n- ブルース -\n「ブルーノート」（短3度や減5度など）と呼ばれる特徴的な音を含み、ブルース音楽特有のソウルフルなサウンドを生み出します。`
         }
     },
     algorithm: {
@@ -56,7 +56,7 @@ export const helpContent = {
         },
         content: {
             en: `'Simple Walk' creates a smooth melody by moving one step at a time. 'Leaps & Rests' creates a more dynamic melody with larger jumps and occasional silence.\n\n- Arpeggio (Up/Down/Random) -\nPlays the notes of the selected scale one by one. 'Up' ascends, 'Down' descends, and 'Random' plays them in a shuffled order, creating a classic, structured feel.`,
-            ja: `「Simple Walk」は一歩ずつ動く滑らかなメロディーを生成します。「Leaps & Rests」は大きな跳躍や時々の休符を伴う、よりダイナミックなメロディーを生成します。\n\n- Arpeggio (Up/Down/Random) -\n選択したスケールの構成音を順番に演奏します。「Up」は上昇、「Down」は下降、「Random」はランダムな順で演奏し、クラシックで構造的なフレーズを生成します。`
+            ja: `「シンプルウォーク」は一歩ずつ動く滑らかなメロディーを生成します。「リープ＆レスト」は大きな跳躍や時々の休符を伴う、よりダイナミックなメロディーを生成します。\n\n- アルペジオ (アップ/ダウン/ランダム) -\n選択したスケールの構成音を順番に演奏します。「アップ」は上昇、「ダウン」は下降、「ランダム」はランダムな順で演奏し、クラシックで構造的なフレーズを生成します。`
         }
     },
     'rest-probability': {
@@ -76,7 +76,7 @@ export const helpContent = {
         },
         content: {
             en: "Determines the basic timbre of the sound. 'Sine' is pure and soft. 'Square' is bright and retro, like a video game. 'Saw' is rich and buzzy. 'Triangle' is mellow and flute-like.",
-            ja: "音の基本的な音色を決定します。「Sine」は純粋で柔らかい音。「Square」はビデオゲームのような明るくレトロな音。「Saw」は豊かで鋭い音。「Triangle」はまろやかでフルートのような音です。"
+            ja: "音の基本的な音色を決定します。「サイン波」は純粋で柔らかい音、「矩形波」はビデオゲームのような明るくレトロな音、「のこぎり波」は豊かで鋭い音、「三角波」はまろやかでフルートのような音です。"
         }
     },
     rate: {
@@ -86,7 +86,7 @@ export const helpContent = {
         },
         content: {
             en: "Sets the speed of the sequence relative to the BPM. '16分' (16th notes) is four notes per beat. '8分' (8th notes) is two notes per beat. '1拍3連' (Triplets) fits three notes into one beat.",
-            ja: "BPMに対するシーケンスの速さを設定します。「16分」は1拍に4つの音、「8分」は1拍に2つの音を演奏します。「1拍3連」は1拍の長さに3つの音を均等に配置します。"
+            ja: "BPMに対するシーケンスの速さを設定します。「16分音符」は1拍に4つの音、「8分音符」は1拍に2つの音を演奏します。「1拍3連符」は1拍の長さに3つの音を均等に配置します。"
         }
     },
     general: {
@@ -96,7 +96,7 @@ export const helpContent = {
         },
         content: {
             en: `This is a 16-step sequencer.\n\n- Sequencer Grid: Click a step to edit its pitch. Drag and drop to swap step positions.\n- Global Controls: Tap 'Base Note' or 'BPM / Rate' to change the overall sound and tempo.\n- Footer Menu: Generate new melodies, Play/Stop the sequence, or Share your creation with a URL.`,
-            ja: `このアプリは16ステップのシーケンサーです。\n\n・シーケンサーグリッド: 各ステップをクリックすると音程を編集できます。ドラッグ＆ドロップすると、ステップの位置を入れ替えられます。\n・グローバルコントロール: 「Base Note」や「BPM / Rate」をタップすると、全体のサウンドやテンポを変更できます。\n・フッターメニュー: 新しいメロディーを生成したり、再生/停止、URLでの共有ができます。`
+            ja: `このアプリは16ステップのシーケンサーです。\n\n・シーケンサーグリッド: 各ステップをクリックすると音程を編集できます。ドラッグ＆ドロップすると、ステップの位置を入れ替えられます。\n・グローバルコントロール: 「ベースノート」や「BPM / レート」をタップすると、全体のサウンドやテンポを変更できます。\n・フッターメニュー: 新しいメロディーを生成したり、再生/停止、URLでの共有ができます。`
         }
     }
 };
