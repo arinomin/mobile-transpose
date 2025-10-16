@@ -526,7 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else { // Step down
                         currentIndex = Math.max(0, currentIndex - 1);
                     }
-                } else { // leaps-and-rests
+                } else if (state.melodyGenAlgorithm === 'leaps-and-rests') {
                     const randomChoice = Math.random();
                     let nextIndex;
                     if (randomChoice < 0.5) { // Small step
@@ -539,6 +539,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     // Clamp index to be within the pool
                     currentIndex = Math.max(0, Math.min(uniqueTransposes.length - 1, nextIndex));
+                } else if (state.melodyGenAlgorithm === 'arpeggio-up') {
+                    currentIndex = (currentIndex + 1) % uniqueTransposes.length;
+                } else if (state.melodyGenAlgorithm === 'arpeggio-down') {
+                    currentIndex = (currentIndex - 1 + uniqueTransposes.length) % uniqueTransposes.length;
+                } else if (state.melodyGenAlgorithm === 'arpeggio-random') {
+                    currentIndex = Math.floor(Math.random() * uniqueTransposes.length);
                 }
             }
         }
@@ -593,7 +599,6 @@ document.addEventListener('DOMContentLoaded', () => {
         shareUrlInput.value = url.toString();
         shareModal.style.display = 'flex';
     }
-
     function closeShareModal() {
         shareModal.style.display = 'none';
     }
@@ -698,12 +703,8 @@ document.addEventListener('DOMContentLoaded', () => {
     previewMelodyButton.addEventListener('click', generateAndPreviewMelody);
     applyMelodyButton.addEventListener('click', applyMelody);
 
-    melodyAlgorithmSelect.addEventListener('click', (e) => {
-        if (e.target.tagName === 'BUTTON') {
-            state.melodyGenAlgorithm = e.target.dataset.value;
-            melodyAlgorithmSelect.querySelector('.selected').classList.remove('selected');
-            e.target.classList.add('selected');
-        }
+    melodyAlgorithmSelect.addEventListener('change', (e) => {
+        state.melodyGenAlgorithm = e.target.value;
     });
 
     melodyRestProbability.addEventListener('input', (e) => {

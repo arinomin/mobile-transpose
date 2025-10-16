@@ -55,8 +55,8 @@ export const helpContent = {
             ja: "アルゴリズム"
         },
         content: {
-            en: "'Simple Walk' creates a smooth melody by moving one step at a time. 'Leaps & Rests' creates a more dynamic melody with larger jumps and occasional silence.",
-            ja: "「Simple Walk」は一歩ずつ動く滑らかなメロディーを生成します。「Leaps & Rests」は大きな跳躍や時々の休符を伴う、よりダイナミックなメロディーを生成します。"
+            en: `'Simple Walk' creates a smooth melody by moving one step at a time. 'Leaps & Rests' creates a more dynamic melody with larger jumps and occasional silence.\n\n- Arpeggio (Up/Down/Random) -\nPlays the notes of the selected scale one by one. 'Up' ascends, 'Down' descends, and 'Random' plays them in a shuffled order, creating a classic, structured feel.`,
+            ja: `「Simple Walk」は一歩ずつ動く滑らかなメロディーを生成します。「Leaps & Rests」は大きな跳躍や時々の休符を伴う、よりダイナミックなメロディーを生成します。\n\n- Arpeggio (Up/Down/Random) -\n選択したスケールの構成音を順番に演奏します。「Up」は上昇、「Down」は下降、「Random」はランダムな順で演奏し、クラシックで構造的なフレーズを生成します。`
         }
     },
     'rest-probability': {
