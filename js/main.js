@@ -80,6 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const helpModalContent = document.getElementById('help-modal-content');
     const helpLanguageSwitcher = document.getElementById('help-language-switcher');
 
+    const notificationModal = document.getElementById('notification-modal');
+    const notificationModalTitle = document.getElementById('notification-modal-title');
+    const notificationModalMessage = document.getElementById('notification-modal-message');
+    const closeNotificationModalButton = document.getElementById('close-notification-modal-button');
+    const notificationModalOkButton = document.getElementById('notification-modal-ok-button');
+
 
     // --- Web Audio API Initialization ---
     function initAudio() {
@@ -90,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             state.masterGainNode.connect(state.audioContext.destination);
             state.masterGainNode.gain.setValueAtTime(1.0, state.audioContext.currentTime);
         } catch (e) {
-            alert('Web Audio API is not supported in this browser.');
+            showNotificationModal('Error', 'Web Audio API is not supported in this browser.');
         }
     }
 
@@ -603,6 +609,17 @@ document.addEventListener('DOMContentLoaded', () => {
         shareModal.style.display = 'none';
     }
 
+    // --- Notification Modal Logic ---
+    function showNotificationModal(title, message) {
+        notificationModalTitle.textContent = title;
+        notificationModalMessage.textContent = message;
+        notificationModal.style.display = 'flex';
+    }
+
+    function closeNotificationModal() {
+        notificationModal.style.display = 'none';
+    }
+
     // --- Event Listeners ---
     function handlePlayStop() {
         if (state.isPlaying) {
@@ -738,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
             copyUrlButton.textContent = 'コピーしました！';
             setTimeout(() => { copyUrlButton.textContent = 'URLをコピー'; }, 2000);
         }, () => {
-            alert('クリップボードへのコピーに失敗しました。');
+            showNotificationModal('コピー失敗', 'クリップボードへのコピーに失敗しました。');
         });
     });
 
@@ -748,6 +765,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const xUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
         window.open(xUrl, '_blank');
     });
+
+    closeNotificationModalButton.addEventListener('click', closeNotificationModal);
+    notificationModalOkButton.addEventListener('click', closeNotificationModal);
+    notificationModal.addEventListener('click', (e) => { if (e.target === notificationModal) closeNotificationModal(); });
 
     let isDragging = false;
     const startDrag = (e) => { isDragging = true; handleSelectorInteraction(e); };
@@ -985,6 +1006,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const stepStr = dataString.substring(pos);
             const transposes = [...stepStr].map(char => parseInt(char, 36) - 12);
 
+            // --- Validation ---
+            if (isNaN(bpm) || bpm < BPM_MIN || bpm > BPM_MAX) {
+                throw new Error(`Invalid BPM: ${bpm}`);
+            }
+            if (isNaN(rateIndex) || rateIndex < 0 || rateIndex >= RATES.length) {
+                throw new Error(`Invalid rate index: ${rateIndex}`);
+            }
+            if (isNaN(noteIndex) || noteIndex < 0 || noteIndex >= NOTE_NAMES.length) {
+                throw new Error(`Invalid note index: ${noteIndex}`);
+            }
+            if (isNaN(baseOctave) || !OCTAVES.includes(baseOctave)) {
+                throw new Error(`Invalid octave: ${baseOctave}`);
+            }
+            if (!WAVEFORMS[waveform]) {
+                throw new Error(`Invalid waveform: ${waveform}`);
+            }
+            if (isNaN(seqMax) || seqMax < 1 || seqMax > STEPS_COUNT) {
+                throw new Error(`Invalid seqMax: ${seqMax}`);
+            }
+            if (transposes.some(t => isNaN(t) || t < -12 || t > 12)) {
+                throw new Error('Invalid transpose values found.');
+            }
+            if (transposes.length > STEPS_COUNT) {
+                throw new Error('Invalid number of steps.');
+            }
+
+            // --- State Update ---
             state.bpm = bpm;
             state.rate = RATES[rateIndex];
             state.baseNote = NOTE_NAMES[noteIndex];
@@ -1018,11 +1066,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             updateAllStepsUI(); // This will now also handle the enabled state visually
 
-            alert('URLからシーケンスを復元しました。');
+            showNotificationModal('復元完了', 'URLからシーケンスを復元しました。');
 
         } catch (e) {
             console.error('URLからの状態復元に失敗しました:', e);
-            alert('URLデータの読み込みに失敗しました。');
+            showNotificationModal('復元失敗', 'URLデータの読み込みに失敗しました。');
         }
     }
 

@@ -911,3 +911,16 @@ input:checked + .slider:before {
     opacity: 0.6;
     margin-top: 12px;
 }
+
+/* --- Notification Modal --- */
+#notification-modal .modal-footer button {
+    width: 100%;
+    padding: 16px;
+    font-size: 1.2em;
+}
+
+#notification-modal-message {
+    line-height: 1.6;
+    font-size: 1.1em;
+    margin: 0;
+}
