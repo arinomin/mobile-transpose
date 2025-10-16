@@ -206,14 +206,11 @@
                     </select>
                 </div>
                 <div class="melody-gen-control">
-                    <label for="melody-algorithm-select">Algorithm <button class="help-button" data-help-topic="algorithm">?</button></label>
-                    <select id="melody-algorithm-select">
-                        <option value="simple-walk">Simple Walk</option>
-                        <option value="leaps-and-rests">Leaps & Rests</option>
-                        <option value="arpeggio-up">Arp Up</option>
-                        <option value="arpeggio-down">Arp Down</option>
-                        <option value="arpeggio-random">Arp Random</option>
-                    </select>
+                    <label>Algorithm <button class="help-button" data-help-topic="algorithm">?</button></label>
+                    <div id="melody-algorithm-select" class="radio-group">
+                        <button data-value="simple-walk" class="radio-button selected">Simple Walk</button>
+                        <button data-value="leaps-and-rests" class="radio-button">Leaps & Rests</button>
+                    </div>
                 </div>
                 <div class="melody-gen-control">
                     <label for="melody-rest-probability">Rest Probability <button class="help-button" data-help-topic="rest-probability">?</button></label>
